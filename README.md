@@ -1,1 +1,1 @@
-# InteractiveGraphicsFinalProject
+# Interactive Graphics Final Project

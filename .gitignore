@@ -5,8 +5,9 @@ node_modules
 bundle.js
 
 # test and demo files
-demo/*
+demo
 
 # VSCODE extensions
 typings/*
 jsconfig.json
+typings.json

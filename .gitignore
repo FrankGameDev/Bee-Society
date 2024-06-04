@@ -8,6 +8,8 @@ bundle.js
 demo
 
 # VSCODE extensions
+# typings
 typings/*
 jsconfig.json
+typings.json
 typings.json

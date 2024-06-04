@@ -3,8 +3,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import Stats from "three/examples/jsm/libs/stats.module";
 
 export default class SceneInit {
-    constructor(canvasId) {
-        // NOTE: Core components to initialize Three.js app.
+    constructor() {
         this.scene = undefined;
         this.camera = undefined;
         this.renderer = undefined;
@@ -13,14 +12,11 @@ export default class SceneInit {
         this.fov = 60;
         this.nearPlane = 1;
         this.farPlane = 1000;
-        this.canvasId = canvasId;
 
-        // NOTE: Additional components.
         this.clock = undefined;
         this.stats = undefined;
         this.controls = undefined;
 
-        // NOTE: Lighting is basically required.
         this.ambientLight = undefined;
         this.directionalLight = undefined;
     }
@@ -36,13 +32,11 @@ export default class SceneInit {
         this.camera.position.z = 24;
         this.camera.position.y = 8;
 
-        // NOTE: Specify a canvas which is already created in the HTML.
         this.renderer = new THREE.WebGLRenderer({
-            // NOTE: Anti-aliasing smooths out the edges.
             // antialias: true,
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        // this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.enabled = true;
         document.body.appendChild(this.renderer.domElement);
 
         this.clock = new THREE.Clock();
@@ -58,19 +52,31 @@ export default class SceneInit {
         this.ambientLight.castShadow = true;
         this.scene.add(this.ambientLight);
 
-        // directional light - parallel sun rays
+        // directional light
         this.directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        // this.directionalLight.castShadow = true;
-        this.directionalLight.position.set(0, 32, 64);
+        this.directionalLight.position.set(0, 100, 100);
+        this.directionalLight.lookAt(new THREE.Vector3());
+        this.directionalLight.castShadow = true;
+        this.directionalLight.shadow.mapSize.width = 1024;
+        this.directionalLight.shadow.mapSize.height = 1024;
+        this.directionalLight.shadow.camera.near = 0.5;
+        this.directionalLight.shadow.camera.far = 500;
+        this.directionalLight.shadow.camera.left = -50;
+        this.directionalLight.shadow.camera.right = 50;
+        this.directionalLight.shadow.camera.top = 50;
+        this.directionalLight.shadow.camera.bottom = -50;
         this.scene.add(this.directionalLight);
+
+        // const helper = new THREE.CameraHelper(
+        //     this.directionalLight.shadow.camera
+        // );
+        // this.scene.add(helper);
 
         // if window resizes
         window.addEventListener("resize", () => this.onWindowResize(), false);
     }
 
     animate() {
-        // NOTE: Window is implied.
-        // requestAnimationFrame(this.animate.bind(this));
         window.requestAnimationFrame(this.animate.bind(this));
         this.render();
         this.stats.update();
@@ -78,8 +84,6 @@ export default class SceneInit {
     }
 
     render() {
-        // NOTE: Update uniform data on each render.
-        // this.uniforms.u_time.value += this.clock.getDelta();
         this.renderer.render(this.scene, this.camera);
     }
 

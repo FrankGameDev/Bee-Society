@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 
-export default class Particle {
+export default class Obstacle {
     constructor(radius, position, color, mass) {
         this.radius = radius;
         this.position = position;
@@ -26,8 +26,10 @@ export default class Particle {
 
     #createRenderer() {
         const geometry = new THREE.SphereGeometry(this.radius);
-        const material = new THREE.MeshBasicMaterial({ color: this.color });
+        const material = new THREE.MeshToonMaterial({ color: this.color });
         this.sphereMesh = new THREE.Mesh(geometry, material);
+        this.sphereMesh.castShadow = true;
+        this.sphereMesh.receiveShadow = true;
     }
 
     instantiate(scene, physicsWorld) {

@@ -65,7 +65,7 @@ export default class Boid {
         this.boidMesh.quaternion.copy(this.boidBody.quaternion);
     }
 
-    //TODO: Add turn velocity
+    //TODO: Add turn velocity and obstacle avoidance
     update(neighbors, target) {
         this.acceleration = new THREE.Vector3(
             this.boidBody.velocity.x,

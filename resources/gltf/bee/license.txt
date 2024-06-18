@@ -1,0 +1,11 @@
+Model Information:
+* title:	Bee
+* source:	https://sketchfab.com/3d-models/bee-f806c882ecd544be82353c90a2dfe1c6
+* author:	Mofn (https://sketchfab.com/Mofn)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Bee" (https://sketchfab.com/3d-models/bee-f806c882ecd544be82353c90a2dfe1c6) by Mofn (https://sketchfab.com/Mofn) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

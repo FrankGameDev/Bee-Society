@@ -1,71 +1,56 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import SceneInit from "./Tools/SceneInit";
-import Obstacle from "./object/Obstacle";
+import SceneInit from "./utils/SceneInit";
+import Obstacle from "./classes/Obstacle";
 import CannonDebugger from "cannon-es-debugger";
-import BoxDrawer from "./BoxDrawer";
+import BoxDrawer from "./classes/BoxDrawer";
+import Flock from "./classes/Flock";
+import { Farm } from "./classes/World building/farm";
+import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer";
 
+let sceneInitializer = undefined;
 let physicsWorld = undefined;
-let groundBody = undefined;
-let test = undefined;
-let groundGeo = undefined;
-let groundMat = undefined;
-let groundMesh = undefined;
-let sphereMesh = undefined;
-let sphereBody = undefined;
-
+let scene = undefined;
 let box = undefined;
+let farm = undefined;
 let target = new THREE.Vector3();
+let labelRenderer = undefined;
 
 function definePhysics() {
-    //Ground
     physicsWorld = new CANNON.World({
         gravity: new CANNON.Vec3(0, -9.81, 0),
     });
-    groundBody = new CANNON.Body({
-        type: CANNON.Body.STATIC,
-        shape: new CANNON.Plane(),
-    });
-    groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
-    physicsWorld.addBody(groundBody);
 }
 
 function defineRender() {
-    test = new SceneInit("myThreeJsCanvas");
-    test.initialize();
-    test.animate();
+    sceneInitializer = new SceneInit();
+    sceneInitializer.initialize();
+    sceneInitializer.animate();
 
-    // const axesHelper = new THREE.AxesHelper(8);
-    // test.scene.add(axesHelper);
-
-    groundGeo = new THREE.PlaneGeometry(1000, 1000);
-    groundMat = new THREE.MeshPhongMaterial({
-        color: new THREE.Color("#F5A66C"),
-    });
-    groundMesh = new THREE.Mesh(groundGeo, groundMat);
-    groundMesh.receiveShadow = true;
-    test.scene.add(groundMesh);
+    const axesHelper = new THREE.AxesHelper(8);
+    sceneInitializer.scene.add(axesHelper);
+    scene = sceneInitializer.scene;
 }
 
 function onMouseClick(event) {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    // Normalizzare le coordinate del mouse
+    // Normalize mouse coordinates
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    raycaster.setFromCamera(mouse, test.camera);
+    raycaster.setFromCamera(mouse, sceneInitializer.camera);
 
-    // Ottieni le intersezioni
+    // Get  intersections
     const intersects = raycaster.intersectObjects(
-        box.particles.map((p) => p.sphereMesh)
+        farm.farmingSpots.map((spot) => spot.spotMesh)
     );
 
     if (intersects.length > 0) {
-        const intersectedParticle = intersects[0].object;
-        target.copy(intersectedParticle.position);
-        console.log("Target set to:", target);
+        const object = intersects[0].object;
+        object.instance.harvestPollen();
+        console.log(`Farming spot touched`);
     }
 }
 
@@ -73,43 +58,27 @@ function main() {
     defineRender();
     definePhysics();
 
-    groundMesh.position.copy(groundBody.position);
-    groundMesh.quaternion.copy(groundBody.quaternion);
+    labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = "absolute";
+    labelRenderer.domElement.style.top = "0px";
+    labelRenderer.domElement.style.pointerEvents = "none";
+    document.body.appendChild(labelRenderer.domElement);
 
-    const cannonDebugger = new CannonDebugger(test.scene, physicsWorld);
-
-    const boxInfo = {
-        boxSize: { width: 50, height: 50, depth: 50 },
-        boxPosition: { x: 0, y: 50 / 2, z: 0 },
-    };
-    const particleInfo = {
-        particleRadius: 1,
-        particleMass: 0,
-        particleColor: new THREE.Color("#B21DBC"),
-    };
-    const boidInfo = {
-        boidRadius: 0.25,
-        boidMass: 1,
-        boidColor: new THREE.Color("#8deeee"),
-    };
-
-    box = new BoxDrawer(boxInfo, particleInfo, boidInfo);
-    box.createBoxRenderer(test.scene);
-    box.createBoids(1000);
-    box.instantiateBoids(test.scene, physicsWorld);
-    box.createParticles(10);
-    box.instantiateParticles(test.scene, physicsWorld);
+    const cannonDebugger = new CannonDebugger(scene, physicsWorld);
 
     window.addEventListener("click", onMouseClick, false);
 
+    farm = new Farm(scene, physicsWorld);
+    farm.createFarm();
+
     const animate = () => {
+        //Debuggers
+        cannonDebugger.update();
+
+        labelRenderer.render(scene, sceneInitializer.camera);
+        requestAnimationFrame(animate);
         physicsWorld.fixedStep();
-        // cannonDebugger.update();
-
-        box.updateBoids(target);
-        box.updateParticles();
-
-        window.requestAnimationFrame(animate);
     };
 
     animate();

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Verbena Flower Low Poly
+* source:	https://sketchfab.com/3d-models/verbena-flower-low-poly-02aa97bd5a934b0fbfa5a87835d23ca0
+* author:	Jeremy E. Grayson (https://sketchfab.com/JeremyGrayson)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Verbena Flower Low Poly" (https://sketchfab.com/3d-models/verbena-flower-low-poly-02aa97bd5a934b0fbfa5a87835d23ca0) by Jeremy E. Grayson (https://sketchfab.com/JeremyGrayson) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

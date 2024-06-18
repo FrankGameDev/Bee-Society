@@ -3,11 +3,11 @@ import * as CANNON from "cannon-es";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const minSpeed = 5;
-const maxSpeed = 10;
+const maxSpeed = 500;
 
 const cohesionWeight = 0.8;
 const separationWeight = 0.5;
-const alignmentWeight = 0.1;
+const alignmentWeight = 0.9;
 const obstacleAvoidanceWeight = 0;
 
 const separationRange = 50;
@@ -78,8 +78,8 @@ export default class Boid {
         this.boidMesh.quaternion.copy(this.boidBody.quaternion);
     }
 
-    //TODO: Add turn velocity and obstacle avoidance
-    update(neighbors, obstacles, target) {
+    //TODO: Add turn velocity and wander logic
+    update(neighbors, target) {
         this.acceleration = new THREE.Vector3(
             this.boidBody.velocity.x,
             this.boidBody.velocity.y,
@@ -97,23 +97,23 @@ export default class Boid {
             this.#alignment(neighbors).multiplyScalar(alignmentWeight);
         const cohesionVelocity =
             this.#cohesion(neighbors).multiplyScalar(cohesionWeight);
-        let obstacleAvoidanceVelocity = this.#obstacleAvoidance(
-            obstacles
-        ).multiplyScalar(obstacleAvoidanceWeight);
+        // let obstacleAvoidanceVelocity = this.#obstacleAvoidance(
+        //     obstacles
+        // ).multiplyScalar(obstacleAvoidanceWeight);
 
-        // Esempio di visualizzazione delle forze di evitamento degli ostacoli
-        let obstacleAvoidanceArrow = new THREE.ArrowHelper(
-            obstacleAvoidanceVelocity.clone().normalize(),
-            this.boidMesh.position,
-            obstacleAvoidanceVelocity.length(),
-            0xffff00
-        );
+        // // Esempio di visualizzazione delle forze di evitamento degli ostacoli
+        // let obstacleAvoidanceArrow = new THREE.ArrowHelper(
+        //     obstacleAvoidanceVelocity.clone().normalize(),
+        //     this.boidMesh.position,
+        //     obstacleAvoidanceVelocity.length(),
+        //     0xffff00
+        // );
         // this.scene.add(obstacleAvoidanceArrow);
 
         this.acceleration.add(separationVelocity);
         this.acceleration.add(alignmentVelocity);
         this.acceleration.add(cohesionVelocity);
-        this.acceleration.add(obstacleAvoidanceVelocity);
+        // this.acceleration.add(obstacleAvoidanceVelocity);
         this.acceleration.add(targetVelocity);
 
         // Limita la velocità massima

@@ -8,16 +8,20 @@ export default class Flock {
     /**
      *
      * @param {number} boidCount
-     * @param {{radius: number, mass: number, color: THREE.Color, boidDetectionRadius: number}} boidInfo
+     * @param {{radius: number, mass: number, color: THREE.Color, boidDetectionRadius: number, startPosition: THREE.Vector3}} boidInfo
+     * @param {THREE.Scene} scene
+     * @param {CANNON.World} physicsWorld
      */
     constructor(boidCount, boidInfo, scene, physicsWorld) {
         this.boidCount = boidCount;
         if (boidInfo == null) boidInfo = {};
 
-        this.boidRadius = boidInfo.boidRadius || 1;
-        this.boidMass = boidInfo.boidMass || 0;
-        this.boidColor = boidInfo.boidColor || new THREE.Color("green");
+        this.boidRadius = boidInfo.radius || 1;
+        this.boidMass = boidInfo.mass || 0;
+        this.boidColor = boidInfo.color || new THREE.Color("green");
         this.boidDetectionRadius = boidInfo.boidDetectionRadius || 50;
+        this.boidStartPosition =
+            boidInfo.startPosition || new THREE.Vector3(0, 10, 0);
         this.boids = Array(boidCount);
 
         this.scene = scene;
@@ -26,10 +30,9 @@ export default class Flock {
 
     instantiateFlock() {
         for (let i = 0; i < this.boidCount; i++) {
-            const position = new THREE.Vector3();
             const boid = new Boid(
                 this.boidRadius,
-                position,
+                this.boidStartPosition,
                 this.boidColor,
                 this.boidMass
             );
@@ -41,9 +44,9 @@ export default class Flock {
         });
     }
 
-    updateBoids(obstacles, target = new THREE.Vector3()) {
+    updateFlock(target = new THREE.Vector3()) {
         this.boids.forEach((boid) => {
-            boid.update(this.boids, obstacles, target);
+            boid.update(this.boids, target);
         });
     }
 }

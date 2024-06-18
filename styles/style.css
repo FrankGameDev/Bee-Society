@@ -1,0 +1,19 @@
+.flower {
+    font-family: "Courier New", Courier, monospace;
+    font-size: larger;
+    font-weight: bold;
+    color: aliceblue;
+    border: 3px solid blanchedalmond;
+    border-style: groove;
+
+    transition-duration: 0.2s;
+    transition-property: opacity, transform;
+}
+
+.hide {
+    opacity: 0;
+}
+
+.show {
+    opacity: 1;
+}

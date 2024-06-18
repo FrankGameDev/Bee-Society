@@ -48,14 +48,25 @@ export class FarmingSpot {
 
             //Pollen label
             this.flowerLabel = document.createElement("p");
+            this.flowerLabel.className = "flower show";
             this.flowerLabel.textContent = `${this.currentPollenLevel}`;
 
             const div = document.createElement("div");
             div.appendChild(this.flowerLabel);
             const divObj = new CSS2DObject(div);
+            this.spotMesh.addEventListener(
+                "mousemove",
+                this.#onMouseMove,
+                false
+            );
+            this.spotMesh.addEventListener(
+                "mouseleave",
+                this.#onMouseLeave,
+                false
+            );
             scene.add(divObj);
             divObj.position.copy(flower.position);
-            // divObj.position.y += 200;
+            divObj.position.z += 100;
         });
     }
 
@@ -78,5 +89,50 @@ export class FarmingSpot {
 
     resetPollen() {
         this.currentPollenLevel = maxPollen;
+    }
+
+    // HTML events
+    #onMouseMove(event) {
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Normalize mouse coordinates
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, sceneInitializer.camera);
+
+        // Get  intersections
+        const intersects = raycaster.intersectObjects(
+            this.farmingSpots.map((spot) => spot.spotMesh)
+        );
+
+        if (intersects.length > 0) {
+            const object = intersects[0].object;
+            const farmSpot = object.instance;
+            farmSpot.flowerLabel.className = "flower show";
+        }
+    }
+
+    #onMouseLeave(event) {
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Normalize mouse coordinates
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, sceneInitializer.camera);
+
+        // Get  intersections
+        const intersects = raycaster.intersectObjects(
+            this.farmingSpots.map((spot) => spot.spotMesh)
+        );
+
+        if (intersects.length > 0) {
+            const object = intersects[0].object;
+            const farmSpot = object.instance;
+            farmSpot.flowerLabel.className = "flower hide";
+        }
     }
 }

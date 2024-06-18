@@ -14,7 +14,6 @@ let scene = undefined;
 let box = undefined;
 let farm = undefined;
 let target = new THREE.Vector3();
-let labelRenderer = undefined;
 
 function definePhysics() {
     physicsWorld = new CANNON.World({
@@ -58,13 +57,6 @@ function main() {
     defineRender();
     definePhysics();
 
-    labelRenderer = new CSS2DRenderer();
-    labelRenderer.setSize(window.innerWidth, window.innerHeight);
-    labelRenderer.domElement.style.position = "absolute";
-    labelRenderer.domElement.style.top = "0px";
-    labelRenderer.domElement.style.pointerEvents = "none";
-    document.body.appendChild(labelRenderer.domElement);
-
     const cannonDebugger = new CannonDebugger(scene, physicsWorld);
 
     window.addEventListener("click", onMouseClick, false);
@@ -72,11 +64,15 @@ function main() {
     farm = new Farm(scene, physicsWorld);
     farm.createFarm();
 
-    const animate = () => {
-        //Debuggers
-        cannonDebugger.update();
+    // let flock = new Flock(
+    //     50,
+    //     { radius: 20, mass: 1, startPosition: new THREE.Vector3() },
+    //     scene,
+    //     physicsWorld
+    // );
+    // flock.instantiateFlock();
 
-        labelRenderer.render(scene, sceneInitializer.camera);
+    const animate = () => {
         requestAnimationFrame(animate);
         physicsWorld.fixedStep();
     };

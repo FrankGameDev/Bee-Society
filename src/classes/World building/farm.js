@@ -37,7 +37,7 @@ export class Farm {
 
     createFarm(farmingSpotCount = 10) {
         this.#defineGround();
-        this.#generateHive();
+        // this.#generateHive();
         this.#generateFarmingSpot(farmingSpotCount);
     }
 

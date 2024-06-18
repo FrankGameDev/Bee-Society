@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import Stats from "three/examples/jsm/libs/stats.module";
+import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer";
 
 //TODO: add controls for:
 // shadows, boids parameters, obstacles parameters
@@ -22,6 +23,7 @@ export default class SceneInit {
 
         this.ambientLight = undefined;
         this.directionalLight = undefined;
+        this.labelRenderer = undefined;
     }
 
     initialize() {
@@ -75,6 +77,13 @@ export default class SceneInit {
         // );
         // this.scene.add(helper);
 
+        this.labelRenderer = new CSS2DRenderer();
+        this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        this.labelRenderer.domElement.style.position = "absolute";
+        this.labelRenderer.domElement.style.top = "0px";
+        this.labelRenderer.domElement.style.pointerEvents = "none";
+        document.body.appendChild(this.labelRenderer.domElement);
+
         // if window resizes
         window.addEventListener("resize", () => this.onWindowResize(), false);
     }
@@ -84,6 +93,7 @@ export default class SceneInit {
         this.render();
         this.stats.update();
         this.controls.update();
+        this.labelRenderer.render(this.scene, this.camera);
     }
 
     render() {
@@ -94,5 +104,6 @@ export default class SceneInit {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
     }
 }

@@ -1,4 +1,4 @@
-import Boid from "./Boid";
+import Bee from "../Bee";
 import Obstacle from "./Obstacle";
 import * as THREE from "three";
 
@@ -57,7 +57,7 @@ export default class BoxDrawer {
     createBoids(numBoids) {
         for (let i = 0; i < numBoids; i++) {
             const position = this.#getRandomPosition();
-            const boid = new Boid(
+            const boid = new Bee(
                 this.boidRadius,
                 position,
                 this.boidColor,

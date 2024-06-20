@@ -14,6 +14,8 @@ export class Farm {
         this.groundMesh = undefined;
         this.farmingSpotPositions = [];
         this.farmingSpots = [];
+        this.hiveMesh = undefined;
+        this.hiveBody = undefined;
 
         //Texture loader
         this.textureLoader = new THREE.TextureLoader();
@@ -36,10 +38,10 @@ export class Farm {
         // this.scene.background = this.sky;
     }
 
-    createFarm(farmingSpotCount = 10) {
+    async createFarm(farmingSpotCount = 10) {
         this.#defineGround();
         this.#generateHive();
-        this.#generateFarmingSpot(farmingSpotCount);
+        await this.#generateFarmingSpot(farmingSpotCount);
     }
 
     #defineGround() {
@@ -73,12 +75,19 @@ export class Farm {
         let hiveMat = new THREE.MeshPhongMaterial({
             color: new THREE.Color("yellow"),
         });
-        let hiveMesh = new THREE.Mesh(hive, hiveMat);
-        this.scene.add(hiveMesh);
+        this.hiveMesh = new THREE.Mesh(hive, hiveMat);
+        this.scene.add(this.hiveMesh);
 
-        hiveMesh.position.set(0, 350, 0);
-        hiveMesh.castShadow = true;
-        hiveMesh.receiveShadow = true;
+        this.hiveBody = new CANNON.Body({
+            mass: 0,
+            shape: new CANNON.Sphere(200),
+        });
+        this.physicsWorld.addBody(this.hiveBody);
+
+        this.hiveMesh.position.set(0, 350, 0);
+        this.hiveMesh.castShadow = true;
+        this.hiveMesh.receiveShadow = true;
+        this.hiveBody.position.copy(this.hiveMesh.position);
     }
 
     /**
@@ -86,7 +95,7 @@ export class Farm {
      * Then, instantiate it
      * @param {Amount of farming spot} farmingSpotCount
      */
-    #generateFarmingSpot(farmingSpotCount) {
+    async #generateFarmingSpot(farmingSpotCount) {
         let count = 0;
         while (count < farmingSpotCount) {
             const randomPos = this.#getRandomPositionOnGround();
@@ -101,18 +110,11 @@ export class Farm {
             }
         }
 
-        this.farmingSpotPositions.forEach((pos) => {
+        for (const pos of this.farmingSpotPositions) {
             let newFarmingSpot = new FarmingSpot();
-            newFarmingSpot.spawnFlower(pos, this.scene);
+            await newFarmingSpot.spawnFlower(pos, this.scene);
             this.farmingSpots.push(newFarmingSpot);
-            // let tmpCube = new THREE.BoxGeometry(200, 200, 200);
-            // let tmpCubeMat = new THREE.MeshBasicMaterial({
-            //     color: new THREE.Color("red"),
-            // });
-            // let tmpCubeMesh = new THREE.Mesh(tmpCube, tmpCubeMat);
-            // tmpCubeMesh.position.set(pos.x, 100, pos.y);
-            // this.scene.add(tmpCubeMesh);
-        });
+        }
     }
 
     #getRandomPositionOnGround() {

@@ -1,10 +1,10 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import SceneInit from "./utils/SceneInit";
-import Obstacle from "./classes/Obstacle";
+import Obstacle from "./classes/unused/Obstacle";
 import CannonDebugger from "cannon-es-debugger";
-import BoxDrawer from "./classes/BoxDrawer";
-import Flock from "./classes/Flock";
+import BoxDrawer from "./classes/unused/BoxDrawer";
+import BeeSwarm from "./classes/BeeSwarm";
 import { Farm } from "./classes/World building/farm";
 import { DayNightCycle } from "./classes/World building/dayNightCycle";
 
@@ -14,6 +14,7 @@ let scene = undefined;
 let box = undefined;
 let farm = undefined;
 let dayNightCycle = undefined;
+let swarm = undefined;
 let target = new THREE.Vector3();
 
 function definePhysics() {
@@ -54,34 +55,48 @@ function onMouseClick(event) {
     }
 }
 
-function main() {
+async function loadAll() {
     defineRender();
     definePhysics();
 
     const cannonDebugger = new CannonDebugger(scene, physicsWorld);
 
-    window.addEventListener("click", onMouseClick, false);
-
     farm = new Farm(scene, physicsWorld);
-    farm.createFarm();
+    await farm.createFarm();
+    console.log("farm loaded");
 
     dayNightCycle = new DayNightCycle(scene);
+    console.log("day night cycle loaded");
 
-    // let flock = new Flock(
-    //     50,
-    //     { radius: 20, mass: 1, startPosition: new THREE.Vector3() },
-    //     scene,
-    //     physicsWorld
-    // );
-    // flock.instantiateFlock();
+    swarm = new BeeSwarm(
+        2,
+        {
+            radius: 20,
+            mass: 1,
+            startPosition: new THREE.Vector3(1000, 250, -1023),
+            modelEnabled: true,
+        },
+        scene,
+        physicsWorld
+    );
+    await swarm.instantiateFlock();
+
+    console.log("swarm loaded");
+}
+
+async function main() {
+    await loadAll();
 
     const animate = () => {
         requestAnimationFrame(animate);
         physicsWorld.fixedStep();
         dayNightCycle.updateCycle();
+
+        swarm.update(farm.hiveMesh.position);
     };
 
     animate();
+    console.log("Step");
 }
 
 main();

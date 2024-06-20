@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { GLTFCustomLoader } from "../utils/gltfCustomLoader";
 
 const minSpeed = 5;
 const maxSpeed = 500;
@@ -15,30 +15,41 @@ const cohesionRange = 50;
 const alignmentRange = 50;
 const obstacleRange = 50;
 
-export default class Boid {
+const beeModelPath = "/bee_low_poly/scene.gltf";
+
+export default class Bee {
     //TODO: change this to handle custom mesh
-    constructor(radius, position, color, mass, detectionRadius, mesh) {
-        this.radius = radius;
-        this.position = position;
-        if (mesh) {
-            loader.load(mesh, function (gltf) {
-                scene.add(gltf.scene);
-            });
-        } else {
-            this.color = color;
-        }
-        this.mass = mass;
+    /**
+     *
+     * @param {{radius: number, position: THREE.Vector3, mass: number, detectionRadius: number, color: THREE.Color, modelEnabled: boolean}} options
+     */
+    constructor(options) {
+        if (!options) console.error("Bee options not available");
+        this.radius = options.radius;
+        this.position = options.position;
+        this.color = options.color;
+        this.mass = options.mass;
         this.detectionRadius =
-            detectionRadius > radius ? detectionRadius : radius * 2;
+            options.detectionRadius > this.radius
+                ? options.detectionRadius
+                : this.radius * 2;
+
+        this.modelEnabled = options.modelEnabled;
+        this.modelLoader = new GLTFCustomLoader();
+        this.modelsToLoad = {
+            bee: beeModelPath,
+        };
+        this.beeModel = undefined;
 
         this.boidMesh = undefined;
         this.boidBody = undefined;
 
-        this.acceleration = undefined;
         this.scene = null;
     }
 
-    #createBody() {
+    // INITIALIZATION =================================================================
+
+    async #createBody() {
         this.boidBody = new CANNON.Body({
             mass: this.mass,
             shape: new CANNON.Sphere(this.radius),
@@ -54,33 +65,100 @@ export default class Boid {
      *
      * @param {*} shadowOptions -> Defines all the shadow options of the boid
      */
-    #createRenderer(shadowOptions = {}) {
-        const geometry = new THREE.SphereGeometry(this.radius);
-        const material = new THREE.MeshToonMaterial({ color: this.color });
-        this.boidMesh = new THREE.Mesh(geometry, material);
+    async #createRenderer(shadowOptions = {}) {
+        if (this.modelEnabled && !this.beeModel) {
+            const model = await this.modelLoader.loadGLTFModel(
+                this.modelsToLoad.bee
+            );
+            this.beeModel = model.scene.children[0].clone();
+        }
+
+        if (!this.beeModel) {
+            const geometry = new THREE.SphereGeometry(this.radius);
+            const material = new THREE.MeshToonMaterial({ color: this.color });
+            this.boidMesh = new THREE.Mesh(geometry, material);
+        } else {
+            const geometry = new THREE.SphereGeometry(this.radius);
+            const material = new THREE.MeshBasicMaterial({ wireframe: true });
+            this.boidMesh = new THREE.Mesh(geometry, material);
+
+            this.beeModel.position.copy(this.boidMesh);
+        }
         this.boidMesh.castShadow = shadowOptions.castShadow || false;
         this.boidMesh.receiveShadow = shadowOptions.receiveShadow || false;
     }
 
-    instantiate(scene, physicsWorld) {
-        this.#createRenderer();
-        this.#createBody();
+    async instantiate(scene, physicsWorld) {
+        await this.#createRenderer();
+        await this.#createBody();
 
         scene.add(this.boidMesh);
+        scene.add(this.beeModel);
         physicsWorld.addBody(this.boidBody);
         this.#bindMeshBody();
 
         this.scene = scene;
     }
 
+    // UPDATE LOGIC =================================================
+
     #bindMeshBody() {
         this.boidMesh.position.copy(this.boidBody.position);
         this.boidMesh.quaternion.copy(this.boidBody.quaternion);
+
+        if (this.beeModel) {
+            this.beeModel.position.copy(this.boidBody.position);
+            this.beeModel.quaternion.copy(this.boidBody.quaternion);
+        }
     }
 
     //TODO: Add turn velocity and wander logic
     update(neighbors, target) {
-        this.acceleration = new THREE.Vector3(
+        let acceleration = this.#applyBoidAlghoritm(target, neighbors);
+
+        this.boidBody.velocity.copy(acceleration);
+
+        this.#bindMeshBody();
+    }
+
+    // JS EVENTS =================================================
+    onMouseClick(event) {
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Normalize mouse coordinates
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, sceneInitializer.camera);
+
+        // Get  intersections
+        const intersects = raycaster.intersectObjects(
+            //TODO give the bee all the farming spots
+            this.farmingSpots.map((spot) => spot.spotMesh)
+        );
+
+        if (intersects.length > 0) {
+            this.#harvestPollen(intersects[0].object.instance);
+        }
+    }
+
+    // BOID LOGIC =================================================================
+
+    /**
+     * Harvest pollen from the given farming spot
+     * @param {A} farmingSpot
+     */
+    #harvestPollen(farmingSpot) {}
+
+    /**
+     *
+     * @param {THREE.Vector3} target Desired target position
+     * @param {*} neighbors All the bee neighbors
+     * @returns calculated acceleration
+     */
+    #applyBoidAlghoritm(target, neighbors) {
+        let acceleration = new THREE.Vector3(
             this.boidBody.velocity.x,
             this.boidBody.velocity.y,
             this.boidBody.velocity.z
@@ -109,28 +187,23 @@ export default class Boid {
         //     0xffff00
         // );
         // this.scene.add(obstacleAvoidanceArrow);
-
-        this.acceleration.add(separationVelocity);
-        this.acceleration.add(alignmentVelocity);
-        this.acceleration.add(cohesionVelocity);
         // this.acceleration.add(obstacleAvoidanceVelocity);
-        this.acceleration.add(targetVelocity);
 
-        // Limita la velocità massima
-        if (this.acceleration.length() > maxSpeed) {
-            this.acceleration.normalize().multiplyScalar(maxSpeed);
+        acceleration.add(separationVelocity);
+        acceleration.add(alignmentVelocity);
+        acceleration.add(cohesionVelocity);
+        acceleration.add(targetVelocity);
+
+        // limit velocity
+        if (acceleration.length() > maxSpeed) {
+            acceleration.normalize().multiplyScalar(maxSpeed);
         }
 
-        this.boidBody.velocity.copy(this.acceleration);
-
-        this.#bindMeshBody();
+        return acceleration;
     }
-
     /**
      * Separation logic
-     * @param {Boid[]} neighbors
-     * @param {number} range
-     * @default range --> separationRange
+     * @param {Bee[]} neighbors
      * @returns {THREE.Vector3} velocity vector for separation
      */
     #separation(neighbors) {
@@ -159,7 +232,7 @@ export default class Boid {
 
     /**
      * Alignemnt logic
-     * @param {Boid[]} neighbors
+     * @param {Bee[]} neighbors
      * @returns {THREE.Vector3} velocity vector for alignment
      */
     #alignment(neighbors) {
@@ -187,7 +260,7 @@ export default class Boid {
 
     /**
      * Cohesion logic
-     * @param {Boid[]} neighbors
+     * @param {Bee[]} neighbors
      * @returns {THREE.Vector3} velocity vector for cohesion
      */
     #cohesion(neighbors) {

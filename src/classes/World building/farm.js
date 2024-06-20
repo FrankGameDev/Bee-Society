@@ -32,12 +32,13 @@ export class Farm {
         );
 
         this.sky = this.textureLoader.load("resources/jpg/blueSky.jpg");
-        this.scene.background = this.sky;
+
+        // this.scene.background = this.sky;
     }
 
     createFarm(farmingSpotCount = 10) {
         this.#defineGround();
-        // this.#generateHive();
+        this.#generateHive();
         this.#generateFarmingSpot(farmingSpotCount);
     }
 
@@ -53,7 +54,7 @@ export class Farm {
             displacementMap: this.grassDisplacement,
         });
         this.groundMesh = new THREE.Mesh(groundGeo, groundMat);
-
+        this.groundMesh.receiveShadow = true;
         // Physics
         let groundBody = new CANNON.Body({
             type: CANNON.Body.STATIC,
@@ -69,13 +70,15 @@ export class Farm {
 
     #generateHive() {
         let hive = new THREE.SphereGeometry(200);
-        let hiveMat = new THREE.MeshBasicMaterial({
+        let hiveMat = new THREE.MeshPhongMaterial({
             color: new THREE.Color("yellow"),
         });
         let hiveMesh = new THREE.Mesh(hive, hiveMat);
         this.scene.add(hiveMesh);
 
         hiveMesh.position.set(0, 350, 0);
+        hiveMesh.castShadow = true;
+        hiveMesh.receiveShadow = true;
     }
 
     /**

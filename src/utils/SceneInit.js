@@ -70,7 +70,7 @@ export default class SceneInit {
         this.directionalLight.shadow.camera.right = 50;
         this.directionalLight.shadow.camera.top = 50;
         this.directionalLight.shadow.camera.bottom = -50;
-        this.scene.add(this.directionalLight);
+        // this.scene.add(this.directionalLight);
 
         // const helper = new THREE.CameraHelper(
         //     this.directionalLight.shadow.camera

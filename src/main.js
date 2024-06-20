@@ -6,13 +6,14 @@ import CannonDebugger from "cannon-es-debugger";
 import BoxDrawer from "./classes/BoxDrawer";
 import Flock from "./classes/Flock";
 import { Farm } from "./classes/World building/farm";
-import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer";
+import { DayNightCycle } from "./classes/World building/dayNightCycle";
 
 let sceneInitializer = undefined;
 let physicsWorld = undefined;
 let scene = undefined;
 let box = undefined;
 let farm = undefined;
+let dayNightCycle = undefined;
 let target = new THREE.Vector3();
 
 function definePhysics() {
@@ -64,6 +65,8 @@ function main() {
     farm = new Farm(scene, physicsWorld);
     farm.createFarm();
 
+    dayNightCycle = new DayNightCycle(scene);
+
     // let flock = new Flock(
     //     50,
     //     { radius: 20, mass: 1, startPosition: new THREE.Vector3() },
@@ -75,6 +78,7 @@ function main() {
     const animate = () => {
         requestAnimationFrame(animate);
         physicsWorld.fixedStep();
+        dayNightCycle.updateCycle();
     };
 
     animate();

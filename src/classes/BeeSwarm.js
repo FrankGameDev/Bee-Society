@@ -9,10 +9,18 @@ export default class BeeSwarm {
      *
      * @param {number} beeCount
      * @param {{radius: number, mass: number, color: THREE.Color, beeDetectionRadius: number, startPosition: THREE.Vector3, modelEnabled: boolean}} beeInfo
+     * @param {Array} farmingSpots
      * @param {THREE.Scene} scene
      * @param {CANNON.World} physicsWorld
      */
-    constructor(beeCount, beeInfo, scene, physicsWorld) {
+    constructor(
+        beeCount,
+        beeInfo,
+        farmingSpots,
+        scene,
+        physicsWorld,
+        sceneInitializer
+    ) {
         this.beeCount = beeCount;
         if (beeInfo == null) beeInfo = {};
 
@@ -23,22 +31,29 @@ export default class BeeSwarm {
         this.beeStartPosition =
             beeInfo.startPosition || new THREE.Vector3(0, 10, 0);
         this.beeModelEnabled = beeInfo.modelEnabled;
-        this.bees = Array(beeCount);
+        this.bees = [];
+
+        this.farmingSpots = farmingSpots;
 
         this.scene = scene;
         this.physicsWorld = physicsWorld;
+        this.sceneInitializer = sceneInitializer;
     }
 
     async instantiateFlock() {
         for (let i = 0; i < this.beeCount; i++) {
-            const bee = new Bee({
-                radius: this.beeRadius,
-                position: this.beeStartPosition,
-                color: this.beeColor,
-                mass: this.beeMass,
-                modelEnabled: this.beeModelEnabled,
-                detectionRadius: this.beeDetectionRadius,
-            });
+            const bee = new Bee(
+                {
+                    radius: this.beeRadius,
+                    position: this.beeStartPosition,
+                    color: this.beeColor,
+                    mass: this.beeMass,
+                    modelEnabled: this.beeModelEnabled,
+                    detectionRadius: this.beeDetectionRadius,
+                },
+                this.farmingSpots,
+                this.sceneInitializer
+            );
             this.bees.push(bee);
         }
 

@@ -2,12 +2,12 @@ import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { GLTFCustomLoader } from "../utils/gltfCustomLoader";
 
-const minSpeed = 5;
-const maxSpeed = 500;
+const minSpeed = 100;
+const maxSpeed = 250;
 
-const cohesionWeight = 0.8;
-const separationWeight = 0.5;
-const alignmentWeight = 0.9;
+const cohesionWeight = 0.3;
+const separationWeight = 500;
+const alignmentWeight = 0.1;
 const obstacleAvoidanceWeight = 0;
 
 const separationRange = 50;
@@ -22,8 +22,9 @@ export default class Bee {
     /**
      *
      * @param {{radius: number, position: THREE.Vector3, mass: number, detectionRadius: number, color: THREE.Color, modelEnabled: boolean}} options
+     * @param {Array} farmingSpots
      */
-    constructor(options) {
+    constructor(options, farmingSpots, sceneInitializer) {
         if (!options) console.error("Bee options not available");
         this.radius = options.radius;
         this.position = options.position;
@@ -41,20 +42,24 @@ export default class Bee {
         };
         this.beeModel = undefined;
 
-        this.boidMesh = undefined;
-        this.boidBody = undefined;
+        this.farmingSpots = farmingSpots;
+
+        this.beeMesh = undefined;
+        this.beeBody = undefined;
 
         this.scene = null;
+        this.sceneInitializer = sceneInitializer;
+        this.nextHarvestingSpot = undefined;
     }
 
     // INITIALIZATION =================================================================
 
     async #createBody() {
-        this.boidBody = new CANNON.Body({
+        this.beeBody = new CANNON.Body({
             mass: this.mass,
             shape: new CANNON.Sphere(this.radius),
         });
-        this.boidBody.position.set(
+        this.beeBody.position.set(
             this.position.x,
             this.position.y,
             this.position.z
@@ -76,53 +81,67 @@ export default class Bee {
         if (!this.beeModel) {
             const geometry = new THREE.SphereGeometry(this.radius);
             const material = new THREE.MeshToonMaterial({ color: this.color });
-            this.boidMesh = new THREE.Mesh(geometry, material);
+            this.beeMesh = new THREE.Mesh(geometry, material);
         } else {
             const geometry = new THREE.SphereGeometry(this.radius);
-            const material = new THREE.MeshBasicMaterial({ wireframe: true });
-            this.boidMesh = new THREE.Mesh(geometry, material);
+            const material = new THREE.MeshBasicMaterial({
+                wireframe: true,
+                opacity: 0,
+            });
+            this.beeMesh = new THREE.Mesh(geometry, material);
 
-            this.beeModel.position.copy(this.boidMesh);
+            this.beeModel.position.copy(this.beeMesh);
         }
-        this.boidMesh.castShadow = shadowOptions.castShadow || false;
-        this.boidMesh.receiveShadow = shadowOptions.receiveShadow || false;
+        this.beeMesh.castShadow = shadowOptions.castShadow || false;
+        this.beeMesh.receiveShadow = shadowOptions.receiveShadow || false;
     }
 
     async instantiate(scene, physicsWorld) {
         await this.#createRenderer();
         await this.#createBody();
 
-        scene.add(this.boidMesh);
+        scene.add(this.beeMesh);
         scene.add(this.beeModel);
-        physicsWorld.addBody(this.boidBody);
+        physicsWorld.addBody(this.beeBody);
         this.#bindMeshBody();
 
         this.scene = scene;
+
+        addEventListener("click", this.#onMouseClick.bind(this), false);
     }
 
     // UPDATE LOGIC =================================================
 
     #bindMeshBody() {
-        this.boidMesh.position.copy(this.boidBody.position);
-        this.boidMesh.quaternion.copy(this.boidBody.quaternion);
+        this.beeMesh.position.copy(this.beeBody.position);
+        this.beeMesh.quaternion.copy(this.beeBody.quaternion);
 
         if (this.beeModel) {
-            this.beeModel.position.copy(this.boidBody.position);
-            this.beeModel.quaternion.copy(this.boidBody.quaternion);
+            this.beeModel.position.copy(this.beeBody.position);
+            this.beeModel.quaternion.copy(this.beeBody.quaternion);
         }
     }
 
     //TODO: Add turn velocity and wander logic
     update(neighbors, target) {
-        let acceleration = this.#applyBoidAlghoritm(target, neighbors);
-
-        this.boidBody.velocity.copy(acceleration);
-
+        //Locomotion
+        let acceleration = this.#applyBoidAlghoritm(
+            this.nextHarvestingSpot
+                ? this.nextHarvestingSpot.spotMesh.position
+                : target,
+            neighbors
+        );
+        this.beeBody.velocity.copy(acceleration);
         this.#bindMeshBody();
+
+        // Harvesting logic
+        if (this.nextHarvestingSpot) {
+            this.#harvestPollen();
+        }
     }
 
     // JS EVENTS =================================================
-    onMouseClick(event) {
+    #onMouseClick(event) {
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
@@ -130,26 +149,61 @@ export default class Bee {
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        raycaster.setFromCamera(mouse, sceneInitializer.camera);
+        raycaster.setFromCamera(mouse, this.sceneInitializer.camera);
 
         // Get  intersections
         const intersects = raycaster.intersectObjects(
-            //TODO give the bee all the farming spots
             this.farmingSpots.map((spot) => spot.spotMesh)
         );
 
         if (intersects.length > 0) {
-            this.#harvestPollen(intersects[0].object.instance);
+            const selectedFarmingSpot = intersects[0].object.instance;
+            this.nextHarvestingSpot = selectedFarmingSpot;
+            this.resetHarvesting();
         }
     }
-
-    // BOID LOGIC =================================================================
 
     /**
      * Harvest pollen from the given farming spot
      * @param {A} farmingSpot
      */
-    #harvestPollen(farmingSpot) {}
+    #harvestPollen() {
+        if (!this.nextHarvestingSpot) return;
+        if (this.harvestHandler) return;
+
+        if (
+            this.beeMesh.position.distanceTo(
+                this.nextHarvestingSpot.spotMesh.position
+            ) > 100
+        ) {
+            console.log("Reaching the target...");
+            return;
+        }
+
+        // if target reached
+        this.harvestHandler = setInterval(
+            function () {
+                const harvestedPollen = this.nextHarvestingSpot.harvestPollen();
+                console.log("harvesting...");
+                //TODO Update UI and currency
+                if (this.nextHarvestingSpot.currentPollenLevel <= 0) {
+                    this.readyToHarvest = false;
+                    this.nextHarvestingSpot = null;
+                    this.resetHarvesting();
+                    console.log("Ending harvesting...");
+                }
+            }.bind(this),
+            1000
+        );
+    }
+
+    resetHarvesting() {
+        clearInterval(this.harvestHandler);
+        this.harvestHandler = null;
+        console.log("Reset harvesting...");
+    }
+
+    // BOID LOGIC =================================================================
 
     /**
      *
@@ -159,13 +213,13 @@ export default class Bee {
      */
     #applyBoidAlghoritm(target, neighbors) {
         let acceleration = new THREE.Vector3(
-            this.boidBody.velocity.x,
-            this.boidBody.velocity.y,
-            this.boidBody.velocity.z
+            this.beeBody.velocity.x,
+            this.beeBody.velocity.y,
+            this.beeBody.velocity.z
         );
 
         const targetVelocity = new THREE.Vector3()
-            .subVectors(target, this.boidBody.position)
+            .subVectors(target, this.beeBody.position)
             .normalize()
             .multiplyScalar(minSpeed);
 
@@ -182,7 +236,7 @@ export default class Bee {
         // // Esempio di visualizzazione delle forze di evitamento degli ostacoli
         // let obstacleAvoidanceArrow = new THREE.ArrowHelper(
         //     obstacleAvoidanceVelocity.clone().normalize(),
-        //     this.boidMesh.position,
+        //     this.beeMesh.position,
         //     obstacleAvoidanceVelocity.length(),
         //     0xffff00
         // );
@@ -210,16 +264,16 @@ export default class Bee {
         let separationForce = new THREE.Vector3();
 
         neighbors.forEach((neighbour) => {
-            const distance = neighbour.boidMesh.position.distanceTo(
-                this.boidMesh.position
+            const distance = neighbour.beeMesh.position.distanceTo(
+                this.beeMesh.position
             );
             // la forza di separazione aumenta inversamente alla distanza,
             // così i boids che si avvicinano troppo tra loro saranno respinti con una forza maggiore.
             if (distance < separationRange && distance > 0) {
                 let repulsion = new THREE.Vector3()
                     .subVectors(
-                        this.boidMesh.position,
-                        neighbour.boidMesh.position
+                        this.beeMesh.position,
+                        neighbour.beeMesh.position
                     )
                     .divideScalar(distance)
                     .divideScalar(distance);
@@ -240,12 +294,12 @@ export default class Bee {
         let neighbourInRange = 0;
 
         neighbors.forEach((neighbour) => {
-            const distance = neighbour.boidMesh.position.distanceTo(
-                this.boidMesh.position
+            const distance = neighbour.beeMesh.position.distanceTo(
+                this.beeMesh.position
             );
 
             if (distance < alignmentRange) {
-                avgVelocity.add(neighbour.boidBody.velocity);
+                avgVelocity.add(neighbour.beeBody.velocity);
                 neighbourInRange += 1;
             }
         });
@@ -253,7 +307,7 @@ export default class Bee {
         if (neighbourInRange > 0)
             avgVelocity
                 .divideScalar(neighbourInRange)
-                .sub(this.boidBody.velocity);
+                .sub(this.beeBody.velocity);
 
         return avgVelocity;
     }
@@ -268,12 +322,12 @@ export default class Bee {
         let neighbourInRange = 0;
 
         neighbors.forEach((neighbour) => {
-            const distance = neighbour.boidMesh.position.distanceTo(
-                this.boidMesh.position
+            const distance = neighbour.beeMesh.position.distanceTo(
+                this.beeMesh.position
             );
 
             if (distance < cohesionRange) {
-                avgPosition.add(neighbour.boidMesh.position);
+                avgPosition.add(neighbour.beeMesh.position);
                 neighbourInRange += 1;
             }
         });
@@ -281,7 +335,7 @@ export default class Bee {
         if (neighbourInRange > 0)
             avgPosition
                 .divideScalar(neighbourInRange)
-                .sub(this.boidMesh.position);
+                .sub(this.beeMesh.position);
 
         return avgPosition;
     }
@@ -294,20 +348,20 @@ export default class Bee {
     #obstacleAvoidance(obstacles) {
         const avoidanceForce = new THREE.Vector3();
         let detectedObstacles = this.#detectObstacles(obstacles);
-        const speed = this.boidBody.velocity.length();
+        const speed = this.beeBody.velocity.length();
 
         // Esegui il calcolo solo se il boid si sta muovendo
         if (speed <= minSpeed) return new THREE.Vector3();
         detectedObstacles.forEach((obstacle) => {
             const toObstacle = new THREE.Vector3().subVectors(
                 obstacle.position,
-                this.boidMesh.position
+                this.beeMesh.position
             );
             const distance = toObstacle.length();
 
             if (distance > 0 && distance < obstacleRange) {
                 const toBoid = new THREE.Vector3().subVectors(
-                    this.boidMesh.position,
+                    this.beeMesh.position,
                     obstacle.position
                 );
                 avoidanceForce.add(
@@ -329,7 +383,7 @@ export default class Bee {
 
         // Define the boid's bounding sphere
         const boidBoundingSphere = new THREE.Sphere(
-            this.boidMesh.position,
+            this.beeMesh.position,
             this.detectionRadius
         );
 

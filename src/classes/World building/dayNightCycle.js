@@ -44,7 +44,7 @@ export class DayNightCycle {
         this.scene.add(this.ambientLight);
 
         //Cycle parameters
-        this.currentState = cycleState.day;
+        this.#setDay();
     }
 
     updateCycle() {
@@ -79,18 +79,20 @@ export class DayNightCycle {
         return color1.clone().lerp(color2, alpha);
     }
     #setDay() {
-        // this.scene.background = new THREE.Color(0x87ceeb);
         //TODO: handle
         // this.scene.scene = new THREE.CubeTextureLoader()
         //     .setPath("resources/textures/cubeMaps/DaySky")
         //     .load(["px.jpg", "nx.jpg", "py.jpg", "ny.jpg", "pz.jpg", "nz.jpg"]);
         this.cycleState = cycleState.day;
         //TODO add logic for day game loop
+        enableBees();
+        stopSpawningEnemies();
     }
 
     #setNight() {
-        // this.scene.background = new THREE.Color(0x000022);
         this.cycleState = cycleState.night;
         //TODO add logic for night game loop
+        disableBees();
+        startSpawningEnemy();
     }
 }

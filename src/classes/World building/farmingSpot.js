@@ -33,7 +33,7 @@ export class FarmingSpot {
             scene.add(flower);
 
             // Spawn a mesh to enable the onClick event intersection
-            const spotClickableGeometry = new THREE.BoxGeometry(15, 0, 15);
+            const spotClickableGeometry = new THREE.BoxGeometry(15, 10, 15);
             const spotClickableMaterial = new THREE.MeshBasicMaterial({
                 wireframe: true,
             });
@@ -41,7 +41,11 @@ export class FarmingSpot {
                 spotClickableGeometry,
                 spotClickableMaterial
             );
-            this.spotMesh.position.set(flower.position.x, 0, flower.position.z);
+            this.spotMesh.position.set(
+                flower.position.x,
+                10,
+                flower.position.z
+            );
             this.spotMesh.scale.copy(flower.scale);
             scene.add(this.spotMesh);
             this.spotMesh.instance = this;
@@ -81,14 +85,17 @@ export class FarmingSpot {
             this.currentPollenLevel
         )}`;
         if (this.currentPollenLevel <= 0) {
-            //TODO implement
-            // DisableFarmingSpot();
+            this.#disableFarmingSpot();
         }
         return this.currentPollenLevel >= 0 ? 1 : 0;
     }
 
     resetPollen() {
         this.currentPollenLevel = maxPollen;
+    }
+
+    #disableFarmingSpot() {
+        //TODO implement
     }
 
     // HTML events

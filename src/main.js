@@ -69,15 +69,17 @@ async function loadAll() {
     console.log("day night cycle loaded");
 
     swarm = new BeeSwarm(
-        2,
+        5,
         {
             radius: 20,
             mass: 1,
-            startPosition: new THREE.Vector3(1000, 250, -1023),
+            startPosition: new THREE.Vector3(100, 0, 0),
             modelEnabled: true,
         },
+        farm.farmingSpots,
         scene,
-        physicsWorld
+        physicsWorld,
+        sceneInitializer
     );
     await swarm.instantiateFlock();
 

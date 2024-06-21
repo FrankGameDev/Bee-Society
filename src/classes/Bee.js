@@ -153,7 +153,9 @@ export default class Bee {
 
         // Get  intersections
         const intersects = raycaster.intersectObjects(
-            this.farmingSpots.map((spot) => spot.spotMesh)
+            this.farmingSpots
+                .filter((spot) => spot.isEnabled)
+                .map((spot) => spot.spotMesh)
         );
 
         if (intersects.length > 0) {

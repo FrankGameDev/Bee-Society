@@ -85,14 +85,14 @@ export class DayNightCycle {
         //     .load(["px.jpg", "nx.jpg", "py.jpg", "ny.jpg", "pz.jpg", "nz.jpg"]);
         this.cycleState = cycleState.day;
         //TODO add logic for day game loop
-        enableBees();
-        stopSpawningEnemies();
+        // enableBees();
+        // stopSpawningEnemies();
     }
 
     #setNight() {
         this.cycleState = cycleState.night;
         //TODO add logic for night game loop
-        disableBees();
-        startSpawningEnemy();
+        // disableBees();
+        // startSpawningEnemy();
     }
 }

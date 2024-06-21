@@ -15,6 +15,7 @@ export class FarmingSpot {
         this.spotMesh = undefined;
         this.flowerLabel = undefined;
         this.currentPollenLevel = maxPollen;
+        this.isEnabled = true;
     }
 
     async #loadModels() {
@@ -92,10 +93,12 @@ export class FarmingSpot {
 
     resetPollen() {
         this.currentPollenLevel = maxPollen;
+        this.isEnabled = true;
     }
 
     #disableFarmingSpot() {
         //TODO implement
+        this.isEnabled = false;
     }
 
     // HTML events

@@ -1,0 +1,23 @@
+{
+    "name": "interactivegraphicsfinalproject",
+    "version": "1.0.0",
+    "description": "Final project for the Interactive Graphics exam",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/FrankGameDev/InteractiveGraphicsFinalProject.git"
+    },
+    "author": "Francesco Mauto",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/FrankGameDev/InteractiveGraphicsFinalProject/issues"
+    },
+    "homepage": "https://github.com/FrankGameDev/InteractiveGraphicsFinalProject#readme",
+    "dependencies": {
+        "three": "0.165.0",
+        "cannon-es": "8.0.0"
+    }
+}

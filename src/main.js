@@ -7,15 +7,15 @@ import BoxDrawer from "./classes/unused/BoxDrawer";
 import BeeSwarm from "./classes/BeeSwarm";
 import { Farm } from "./classes/World building/farm";
 import { DayNightCycle } from "./classes/World building/dayNightCycle";
+import { EnemyManager } from "./classes/enemyManager";
 
 let sceneInitializer = undefined;
 let physicsWorld = undefined;
 let scene = undefined;
-let box = undefined;
 let farm = undefined;
 let dayNightCycle = undefined;
 let swarm = undefined;
-let target = new THREE.Vector3();
+let enemiesManager = undefined;
 
 function definePhysics() {
     physicsWorld = new CANNON.World({
@@ -31,28 +31,6 @@ function defineRender() {
     const axesHelper = new THREE.AxesHelper(8);
     sceneInitializer.scene.add(axesHelper);
     scene = sceneInitializer.scene;
-}
-
-function onMouseClick(event) {
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    // Normalize mouse coordinates
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    raycaster.setFromCamera(mouse, sceneInitializer.camera);
-
-    // Get  intersections
-    const intersects = raycaster.intersectObjects(
-        farm.farmingSpots.map((spot) => spot.spotMesh)
-    );
-
-    if (intersects.length > 0) {
-        const object = intersects[0].object;
-        object.instance.harvestPollen();
-        console.log(`Farming spot touched`);
-    }
 }
 
 async function loadAll() {
@@ -84,6 +62,12 @@ async function loadAll() {
     await swarm.instantiateFlock();
 
     console.log("swarm loaded");
+
+    enemiesManager = new EnemyManager(10, {}, farm.farmingSpots, [], {
+        dimension: farm.getGroundDimension(),
+    });
+    // await enemiesManager.instantiateEnemies(scene, physicsWorld);
+    console.log("Enemies loaded");
 }
 
 async function main() {

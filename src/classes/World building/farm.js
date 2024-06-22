@@ -124,4 +124,10 @@ export class Farm {
             (Math.random() - 0.5) * planeDimension.y
         );
     }
+
+    getGroundDimension = () =>
+        new THREE.Vector2(
+            this.groundMesh.geometry.parameters.width,
+            this.groundMesh.geometry.parameters.height
+        );
 }

@@ -18,6 +18,6 @@
     "homepage": "https://github.com/FrankGameDev/InteractiveGraphicsFinalProject#readme",
     "dependencies": {
         "three": "0.165.0",
-        "cannon-es": "8.0.0"
+        "cannon-es": "0.20.0"
     }
 }

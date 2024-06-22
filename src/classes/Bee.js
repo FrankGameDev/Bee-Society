@@ -170,8 +170,7 @@ export default class Bee {
      * @param {A} farmingSpot
      */
     #harvestPollen() {
-        if (!this.nextHarvestingSpot) return;
-        if (this.harvestHandler) return;
+        if (!this.nextHarvestingSpot || this.harvestHandler) return;
 
         if (
             this.beeMesh.position.distanceTo(
@@ -249,6 +248,7 @@ export default class Bee {
         acceleration.add(alignmentVelocity);
         acceleration.add(cohesionVelocity);
         acceleration.add(targetVelocity);
+        //TODO handle rotation only towards the target and, if its touching something, based on the dot product
 
         // limit velocity
         if (acceleration.length() > maxSpeed) {

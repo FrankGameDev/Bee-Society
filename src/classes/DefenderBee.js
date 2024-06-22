@@ -8,7 +8,6 @@ const maxSpeed = 250;
 const beeModelPath = "/bee_2/scene.gltf";
 
 export default class DefenderBee {
-    //TODO: change this to handle custom mesh
     /**
      *
      * @param {{radius: number, position: THREE.Vector3, mass: number, detectionRadius: number, color: THREE.Color, modelEnabled: boolean}} options
@@ -39,6 +38,8 @@ export default class DefenderBee {
         this.sceneInitializer = sceneInitializer;
         this.enemies = enemies;
         this.nearestEnemy = undefined;
+
+        this.hp = 10;
     }
 
     // INITIALIZATION =================================================================

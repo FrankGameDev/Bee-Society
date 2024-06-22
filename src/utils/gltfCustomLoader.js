@@ -6,8 +6,13 @@ export class GLTFCustomLoader {
         this.models = {};
     }
 
-    // Funzione per caricare un singolo file GLTF
+    /**
+     * Load a single model from a gltf file
+     * @param {*} path
+     * @returns promise with the loaded model in the result
+     */
     loadGLTFModel(path) {
+        //TODO rework logic from this code and all its implementations
         return new Promise((resolve, reject) => {
             this.gltfLoader.load(
                 path,
@@ -19,6 +24,7 @@ export class GLTFCustomLoader {
     }
 
     /**
+     * Async function to load all the gltf models defined inside the input object
      * Funzione asincrona per caricare tutti i modelli GLTF
      * @param {modelName: string, path: string} objects
      * @returns

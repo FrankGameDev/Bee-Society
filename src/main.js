@@ -11,6 +11,7 @@ import { EnemyManager } from "./classes/entities/enemy/enemyManager";
 import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { UiManager } from "./classes/ui/uiManager";
+import { GameManager } from "./classes/gameManager";
 
 let sceneInitializer = undefined;
 let physicsWorld = undefined;
@@ -19,7 +20,8 @@ let farm = undefined;
 let dayNightCycle = undefined;
 let swarm = undefined;
 let enemiesManager = undefined;
-let uiManager = new UiManager();
+let gameManager = undefined;
+let uiManager = undefined;
 
 function definePhysics() {
     physicsWorld = new CANNON.World({
@@ -50,6 +52,16 @@ async function loadAll() {
     dayNightCycle = new DayNightCycle(scene);
     console.log("day night cycle loaded");
 
+    // enemiesManager = new EnemyManager(10, {}, farm.farmingSpots, [], {
+    //     dimension: farm.getGroundDimension(),
+    // });
+    // await enemiesManager.instantiateEnemies(scene, physicsWorld);
+    // console.log("Enemies loaded");
+
+    gameManager = new GameManager(dayNightCycle);
+    console.log("Game manager loaded");
+    uiManager = new UiManager(gameManager);
+    console.log("UI manager loaded");
     swarm = new BeeSwarm(
         5,
         {
@@ -61,17 +73,11 @@ async function loadAll() {
         farm.farmingSpots,
         scene,
         physicsWorld,
-        sceneInitializer
+        sceneInitializer,
+        gameManager
     );
     await swarm.instantiateFlock();
-
     console.log("swarm loaded");
-
-    // enemiesManager = new EnemyManager(10, {}, farm.farmingSpots, [], {
-    //     dimension: farm.getGroundDimension(),
-    // });
-    // await enemiesManager.instantiateEnemies(scene, physicsWorld);
-    // console.log("Enemies loaded");
 }
 
 async function main() {

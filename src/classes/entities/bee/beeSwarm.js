@@ -1,3 +1,4 @@
+import { GameManager } from "../../gameManager";
 import Bee from "./bee";
 import * as THREE from "three";
 
@@ -12,6 +13,7 @@ export default class BeeSwarm {
      * @param {Array} farmingSpots
      * @param {THREE.Scene} scene
      * @param {CANNON.World} physicsWorld
+     * @param {GameManager} gameManager
      */
     constructor(
         beeCount,
@@ -19,7 +21,8 @@ export default class BeeSwarm {
         farmingSpots,
         scene,
         physicsWorld,
-        sceneInitializer
+        sceneInitializer,
+        gameManager
     ) {
         this.beeCount = beeCount;
         if (beeInfo == null) beeInfo = {};
@@ -38,6 +41,7 @@ export default class BeeSwarm {
         this.scene = scene;
         this.physicsWorld = physicsWorld;
         this.sceneInitializer = sceneInitializer;
+        this.gameManager = gameManager;
     }
 
     async instantiateFlock() {
@@ -52,7 +56,8 @@ export default class BeeSwarm {
                     detectionRadius: this.beeDetectionRadius,
                 },
                 this.farmingSpots,
-                this.sceneInitializer
+                this.sceneInitializer,
+                this.gameManager
             );
             this.bees.push(bee);
         }

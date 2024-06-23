@@ -2,8 +2,9 @@ import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 
-const minSpeed = 100;
-const maxSpeed = 250;
+const startingMinSpeed = 100;
+const startingMaxSpeed = 250;
+const startingHarvestingSpeed = 1; //seconds
 
 const cohesionWeight = 0.3;
 const separationWeight = 500;
@@ -18,14 +19,17 @@ const obstacleRange = 50;
 const beeModelPath = "/bee_low_poly/scene.gltf";
 
 export default class Bee {
-    //TODO: change this to handle custom mesh
     /**
      *
      * @param {{radius: number, position: THREE.Vector3, mass: number, detectionRadius: number, color: THREE.Color, modelEnabled: boolean}} options
      * @param {Array} farmingSpots
+     * @param {GameManager} gameManager
      */
-    constructor(options, farmingSpots, sceneInitializer) {
+    constructor(options, farmingSpots, sceneInitializer, gameManager) {
         if (!options) console.error("Bee options not available");
+        if (!gameManager) console.error("Game manager not available");
+        this.gameManager = gameManager;
+
         this.radius = options.radius;
         this.position = options.position;
         this.color = options.color;
@@ -34,6 +38,14 @@ export default class Bee {
             options.detectionRadius > this.radius
                 ? options.detectionRadius
                 : this.radius * 2;
+        this.minSpeed = () =>
+            startingMinSpeed * this.gameManager.getBeeMovementSpeedMultiplier();
+        this.maxSpeed = () =>
+            startingMaxSpeed * this.gameManager.getBeeMovementSpeedMultiplier();
+        this.harvestingSpeed = () =>
+            startingHarvestingSpeed *
+            this.gameManager.getBeeHarvestSpeedMultiplier *
+            1000;
 
         this.modelEnabled = options.modelEnabled;
         this.modelLoader = new GLTFCustomLoader();
@@ -76,6 +88,7 @@ export default class Bee {
                 this.modelsToLoad.bee
             );
             this.beeModel = model.scene.children[0].clone();
+            this.beeModel.scale.multiplyScalar(5);
         }
 
         if (!this.beeModel) {
@@ -167,7 +180,6 @@ export default class Bee {
 
     /**
      * Harvest pollen from the given farming spot
-     * @param {A} farmingSpot
      */
     #harvestPollen() {
         if (!this.nextHarvestingSpot || this.harvestHandler) return;
@@ -184,9 +196,9 @@ export default class Bee {
         // if target reached
         this.harvestHandler = setInterval(
             function () {
-                const harvestedPollen = this.nextHarvestingSpot.harvestPollen();
                 console.log("harvesting...");
-                //TODO Update UI and currency
+                const harvestedPollen = this.nextHarvestingSpot.harvestPollen();
+                this.gameManager.addPollen(harvestedPollen);
                 if (this.nextHarvestingSpot.currentPollenLevel <= 0) {
                     this.readyToHarvest = false;
                     this.nextHarvestingSpot = null;
@@ -194,7 +206,7 @@ export default class Bee {
                     console.log("Ending harvesting...");
                 }
             }.bind(this),
-            1000
+            this.harvestingSpeed()
         );
     }
 
@@ -222,7 +234,7 @@ export default class Bee {
         const targetVelocity = new THREE.Vector3()
             .subVectors(target, this.beeBody.position)
             .normalize()
-            .multiplyScalar(minSpeed);
+            .multiplyScalar(this.minSpeed());
 
         const separationVelocity =
             this.#separation(neighbors).multiplyScalar(separationWeight);
@@ -251,8 +263,8 @@ export default class Bee {
         //TODO handle rotation only towards the target and, if its touching something, based on the dot product
 
         // limit velocity
-        if (acceleration.length() > maxSpeed) {
-            acceleration.normalize().multiplyScalar(maxSpeed);
+        if (acceleration.length() > this.maxSpeed()) {
+            acceleration.normalize().multiplyScalar(this.maxSpeed());
         }
 
         return acceleration;
@@ -353,7 +365,7 @@ export default class Bee {
         const speed = this.beeBody.velocity.length();
 
         // Esegui il calcolo solo se il boid si sta muovendo
-        if (speed <= minSpeed) return new THREE.Vector3();
+        if (speed <= this.minSpeed()) return new THREE.Vector3();
         detectedObstacles.forEach((obstacle) => {
             const toObstacle = new THREE.Vector3().subVectors(
                 obstacle.position,

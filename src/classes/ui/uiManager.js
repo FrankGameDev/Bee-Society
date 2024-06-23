@@ -1,5 +1,29 @@
+import { GameManager } from "../gameManager";
+
 export class UiManager {
-    constructor() {
+    /**
+     *
+     * @param {GameManager} gameManager
+     */
+    constructor(gameManager) {
+        this.gameManager = gameManager;
+
+        // Pollen level
+        this.pollenLevel = document.getElementById("pollen-currency");
+        //FIXME use a watch for this
+        this.pollenLevel.textContent = this.gameManager.pollenInfo.pollenAmount;
+        this.gameManager.pollenInfo.registerListener(
+            function (amount) {
+                this.pollenLevel.textContent = amount;
+                console.log("test");
+            }.bind(this)
+        );
+
+        // Day/night cycle
+
+        // Buttons for upgrades =================
+
+        // Bee upgrades
         this.beeUpgradeButton = document.getElementById(
             "bee-upgrade-menu-button"
         );
@@ -9,7 +33,27 @@ export class UiManager {
         );
 
         this.beeUpgradeMenu = document.getElementById("bee-upgrade-menu");
+        this.beeMovementUpgradeBtn = document.getElementById(
+            "bee-movement-upgrade"
+        );
+        this.beeMovementUpgradeBtn.addEventListener(
+            "click",
+            this.#upgradeBeeMovement.bind(this)
+        );
+        this.beeMovementUpgradeLabel =
+            document.getElementById("bee-movement-level");
 
+        this.beeHarvestUpgradeBtn = document.getElementById(
+            "bee-harvest-upgrade"
+        );
+        this.beeHarvestUpgradeBtn.addEventListener(
+            "click",
+            this.#upgradeBeeHarvest.bind(this)
+        );
+        this.beeMovementUpgradeLabel =
+            document.getElementById("bee-harvest-level");
+
+        // Defender upgrades
         this.defenderUpgradeButton = document.getElementById(
             "defender-upgrade-menu-button"
         );
@@ -21,6 +65,8 @@ export class UiManager {
             "defender-upgrade-menu"
         );
     }
+
+    // UPGRADES  ===========
 
     #openBeeUpgradeMenu() {
         console.log("Open bee upgrade menu");
@@ -38,6 +84,14 @@ export class UiManager {
             this.defenderUpgradeButton.classList.add("visible");
             this.defenderUpgradeButton.classList.remove("hidden");
         }
+    }
+
+    #upgradeBeeMovement() {
+        this.gameManager.upgradeBeeMovementSpeed();
+    }
+
+    #upgradeBeeHarvest() {
+        this.gameManager.upgradeBeeHarvestingSpeed();
     }
 
     #openDefenderUpgradeMenu() {

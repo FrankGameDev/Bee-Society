@@ -1,13 +1,16 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import SceneInit from "./utils/SceneInit";
+import SceneInit from "./utils/sceneInit";
 import Obstacle from "./classes/unused/Obstacle";
 import CannonDebugger from "cannon-es-debugger";
 import BoxDrawer from "./classes/unused/BoxDrawer";
-import BeeSwarm from "./classes/BeeSwarm";
+import BeeSwarm from "./classes/entities/bee/beeSwarm";
 import { Farm } from "./classes/World building/farm";
 import { DayNightCycle } from "./classes/World building/dayNightCycle";
-import { EnemyManager } from "./classes/enemyManager";
+import { EnemyManager } from "./classes/entities/enemy/enemyManager";
+import "bootstrap";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { UiManager } from "./classes/ui/uiManager";
 
 let sceneInitializer = undefined;
 let physicsWorld = undefined;
@@ -16,6 +19,7 @@ let farm = undefined;
 let dayNightCycle = undefined;
 let swarm = undefined;
 let enemiesManager = undefined;
+let uiManager = new UiManager();
 
 function definePhysics() {
     physicsWorld = new CANNON.World({
@@ -63,11 +67,11 @@ async function loadAll() {
 
     console.log("swarm loaded");
 
-    enemiesManager = new EnemyManager(10, {}, farm.farmingSpots, [], {
-        dimension: farm.getGroundDimension(),
-    });
+    // enemiesManager = new EnemyManager(10, {}, farm.farmingSpots, [], {
+    //     dimension: farm.getGroundDimension(),
+    // });
     // await enemiesManager.instantiateEnemies(scene, physicsWorld);
-    console.log("Enemies loaded");
+    // console.log("Enemies loaded");
 }
 
 async function main() {

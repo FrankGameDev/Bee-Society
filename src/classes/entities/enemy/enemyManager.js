@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { Enemy } from "./Enemy";
+import { Enemy } from "./enemy";
 
 export class EnemyManager {
     /**
@@ -52,10 +52,27 @@ export class EnemyManager {
     }
 
     #getRandomSpawnPosition() {
-        return new THREE.Vector3(
-            (Math.random() - 0.5) * this.levelInfo.dimension.x,
-            50,
-            (Math.random() - 0.5) * this.levelInfo.dimension.y
-        );
+        const boundaryWidth = 10; // The distance from the edges of the plane within which points can be generated
+        const xDimension = this.levelInfo.dimension.x;
+        const yDimension = this.levelInfo.dimension.y;
+
+        let x, z;
+
+        // Decide if the point will be along the top/bottom edge or right/left edge
+        if (Math.random() < 0.5) {
+            // Generate a point along the top or bottom edges
+            x = (Math.random() - 0.5) * xDimension;
+            z =
+                (Math.random() < 0.5 ? -0.5 : 0.5) * yDimension +
+                (Math.random() < 0.5 ? -1 : 1) * boundaryWidth;
+        } else {
+            // Generate a point along the right or left edges
+            x =
+                (Math.random() < 0.5 ? -0.5 : 0.5) * xDimension +
+                (Math.random() < 0.5 ? -1 : 1) * boundaryWidth;
+            z = (Math.random() - 0.5) * yDimension;
+        }
+
+        return new THREE.Vector3(x, 50, z);
     }
 }

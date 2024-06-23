@@ -37,12 +37,11 @@ export default class SceneInit {
         this.camera.position.z = 1000;
         this.camera.position.y = 300;
 
-        this.renderer = new THREE.WebGLRenderer({
-            // antialias: true,
-        });
+        const canvas = document.getElementById("webGlRenderer");
+        this.renderer = new THREE.WebGLRenderer({ canvas: canvas });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         // this.renderer.shadowMap.enabled = true;
-        document.body.appendChild(this.renderer.domElement);
+        // document.body.appendChild(this.renderer.domElement);
 
         this.clock = new THREE.Clock();
         this.controls = new OrbitControls(
@@ -50,32 +49,13 @@ export default class SceneInit {
             this.renderer.domElement
         );
         this.stats = Stats();
+        this.stats.dom.className = "stats";
         document.body.appendChild(this.stats.dom);
 
         // ambient light which is for the whole scene
         this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         this.ambientLight.castShadow = true;
         this.scene.add(this.ambientLight);
-
-        // directional light
-        this.directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        this.directionalLight.position.set(0, 100, 100);
-        this.directionalLight.lookAt(new THREE.Vector3());
-        this.directionalLight.castShadow = true;
-        this.directionalLight.shadow.mapSize.width = 1024;
-        this.directionalLight.shadow.mapSize.height = 1024;
-        this.directionalLight.shadow.camera.near = 0.5;
-        this.directionalLight.shadow.camera.far = 500;
-        this.directionalLight.shadow.camera.left = -50;
-        this.directionalLight.shadow.camera.right = 50;
-        this.directionalLight.shadow.camera.top = 50;
-        this.directionalLight.shadow.camera.bottom = -50;
-        // this.scene.add(this.directionalLight);
-
-        // const helper = new THREE.CameraHelper(
-        //     this.directionalLight.shadow.camera
-        // );
-        // this.scene.add(helper);
 
         this.labelRenderer = new CSS2DRenderer();
         this.labelRenderer.setSize(window.innerWidth, window.innerHeight);

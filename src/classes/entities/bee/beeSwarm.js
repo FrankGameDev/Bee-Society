@@ -1,4 +1,4 @@
-import Bee from "./Bee";
+import Bee from "./bee";
 import * as THREE from "three";
 
 /**

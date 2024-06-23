@@ -11,6 +11,118 @@
         <link rel="stylesheet" type="text/css" href="styles/style.css" />
     </head>
     <body>
+        <div id="canvas-div">
+            <canvas id="webGlRenderer"></canvas>
+        </div>
+
+        <!-- UI -->
+        <div
+            class="ui position-relative d-flex flex-column justify-content-between">
+            <div
+                id="top-ui"
+                class="top-ui position-relative w-100 h-auto d-flex justify-content-start align-items-start">
+                <div id="cycle" class="cycle position-absolute top-0 start-0">
+                    <img alt="day" class="day show" />
+                    <img alt="night" class="night hide" />
+                </div>
+
+                <div
+                    id="pollen"
+                    class="pollen d-flex position-absolute top-0 start-50 translate-middle-x border border-light border-opacity-75">
+                    <img alt="pollen placeholder" class="mx-auto my-auto" />
+                    <p
+                        id="pollen-currency"
+                        class="pollen-currency mx-auto my-auto">
+                        100
+                    </p>
+                </div>
+            </div>
+
+            <div
+                id="bottom-ui"
+                class="bottom-ui position-relative w-100 h-auto d-flex justify-content-end align-items-end">
+                <div
+                    id="upgrade-container"
+                    class="upgrade-container d-flex flex-row">
+                    <div
+                        id="bee-upgrade-container"
+                        class="d-flex flex-row position-relative">
+                        <button
+                            id="bee-upgrade-menu-button"
+                            class="btn btn-lg btn-success">
+                            Bee Upgrades
+                        </button>
+                        <div
+                            id="bee-upgrade-menu"
+                            class="position-relative upgrade-menu hidden">
+                            <div
+                                class="upgrade-button"
+                                id="bee-movement-upgrade-container">
+                                <button
+                                    id="bee-movement-upgrade"
+                                    class="btn btn-lg btn-secondary">
+                                    Movement
+                                </button>
+                                <span id="bee-movement-level">
+                                    Current level = 1
+                                </span>
+                            </div>
+                            <div
+                                class="upgrade-button"
+                                id="bee-amount-upgrade-container">
+                                <button
+                                    id="bee-amount-upgrade"
+                                    class="btn btn-lg btn-secondary">
+                                    Amount
+                                </button>
+                                <span id="bee-amount-level">
+                                    Current level = 1
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        id="defender-upgrade-container"
+                        class="d-flex flex-row position-relative">
+                        <button
+                            id="defender-upgrade-menu-button"
+                            class="btn btn-lg btn-danger">
+                            Defender upgrades
+                        </button>
+                        <div
+                            id="defender-upgrade-menu"
+                            class="position-relative upgrade-menu hidden">
+                            <div
+                                class="upgrade-button"
+                                id="defender-movement-upgrade-container">
+                                <button
+                                    id="defender-movement-upgrade"
+                                    class="btn btn-lg btn-secondary">
+                                    Movement
+                                </button>
+                                <span id="defender-movement-level">
+                                    Current level = 1
+                                </span>
+                            </div>
+                            <div
+                                class="upgrade-button"
+                                id="defender-amount-upgrade-container">
+                                <button
+                                    id="defender-amount-upgrade"
+                                    class="btn btn-lg btn-secondary">
+                                    Amount
+                                </button>
+                                <span id="defender-amount-level">
+                                    Current level = 1
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scripts -->
         <script type="module" src="./src/main.js"></script>
     </body>
 </html>

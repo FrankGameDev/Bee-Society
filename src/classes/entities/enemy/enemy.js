@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import { GLTFCustomLoader } from "../utils/gltfCustomLoader";
+import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 
 const minSpeed = 100;
 const maxSpeed = 250;
@@ -82,6 +82,7 @@ export class Enemy {
                 this.modelsToLoad.enemy
             );
             this.enemyModel = model.scene.children[0].clone();
+            this.enemyModel.scale.multiplyScalar(10);
         }
 
         //If there is an error during loading the model

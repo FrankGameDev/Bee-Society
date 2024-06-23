@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import { GLTFCustomLoader } from "../utils/gltfCustomLoader";
+import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 
 const minSpeed = 100;
 const maxSpeed = 250;

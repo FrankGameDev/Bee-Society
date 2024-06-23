@@ -1,3 +1,7 @@
+body {
+    font-family: "Courier New", Courier, monospace;
+}
+
 .flower {
     font-family: "Courier New", Courier, monospace;
     font-size: larger;
@@ -18,6 +22,12 @@
     opacity: 1;
 }
 
+.hidden {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    display: none;
+}
+
 .day-night-timer {
     position: fixed;
     top: 10px;
@@ -27,4 +37,95 @@
     padding: 5px 10px;
     border-radius: 5px;
     font-family: Arial, sans-serif;
+}
+
+/* CANVAS */
+
+canvas {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#canvas-div {
+    position: relative;
+}
+
+/* UI */
+
+.ui {
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 1; /* Assicurati che il UI sia sopra il canvas */
+}
+
+button {
+    pointer-events: all;
+}
+.pollen {
+    background-color: rgba(165, 182, 12, 0.5);
+    height: 3em;
+}
+
+.pollen-currency {
+    padding-left: 1em;
+    font-size: large;
+    font-weight: bold;
+}
+
+.cycle {
+    height: 5em;
+
+    transition-duration: 0.2s;
+    transition-property: opacity, transform;
+}
+
+.upgrade-container {
+    height: 100%;
+    position: relative;
+}
+
+.stats {
+    position: fixed !important;
+    top: 0% !important;
+    left: 90% !important;
+}
+
+.upgrade-button {
+    display: flex;
+    flex-direction: column;
+    margin-right: 0.5em;
+    margin-left: 0.5em;
+}
+
+.upgrade-button > span {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(250, 235, 215, 0.5);
+    color: white;
+    font-size: medium;
+    font-weight: 200;
+    margin-top: auto !important;
+    margin-bottom: auto !important;
+}
+
+.upgrade-menu {
+    position: absolute;
+    left: 0; /* Partenza da destra del bottone */
+    opacity: 0;
+    transform: translateX(100%);
+    transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    display: none;
+    margin-right: 1em;
+}
+
+.upgrade-menu.visible {
+    transform: translateX(0);
+    opacity: 1;
+    display: flex;
 }

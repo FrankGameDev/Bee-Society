@@ -1,4 +1,4 @@
-import Bee from "../Bee";
+import Bee from "../entities/bee/bee";
 import Obstacle from "./Obstacle";
 import * as THREE from "three";
 

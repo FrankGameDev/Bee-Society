@@ -53,22 +53,25 @@ export class FarmingSpot {
 
             //Pollen label
             this.flowerLabel = document.createElement("p");
-            this.flowerLabel.className = "flower show";
+            this.flowerLabel.className = "hide";
             this.flowerLabel.textContent = `${this.currentPollenLevel}`;
+
+            this.flowerPollenProgressBar = document.createElement("div");
+            this.flowerPollenProgressBar.className = "progress";
+            this.flowerPollenProgressBar.style.width = "5vw";
+            this.flowerPollenLvl = document.createElement("div");
+            this.flowerPollenLvl.className = "progress-bar bg-warning";
+            this.flowerPollenLvl.style.width = "100%";
+            this.flowerPollenLvl.ariaValueNow = this.currentPollenLevel;
+            this.flowerPollenLvl.ariaValueMax = this.currentPollenLevel;
+            this.flowerPollenLvl.ariaValueMin = 0;
+            this.flowerPollenLvl.role = "progressbar";
+            this.flowerPollenProgressBar.appendChild(this.flowerPollenLvl);
 
             const div = document.createElement("div");
             div.appendChild(this.flowerLabel);
+            div.appendChild(this.flowerPollenProgressBar);
             const divObj = new CSS2DObject(div);
-            this.spotMesh.addEventListener(
-                "mousemove",
-                this.#onMouseMove,
-                false
-            );
-            this.spotMesh.addEventListener(
-                "mouseleave",
-                this.#onMouseLeave,
-                false
-            );
             scene.add(divObj);
             divObj.position.copy(flower.position);
             divObj.position.z += 100;
@@ -81,10 +84,12 @@ export class FarmingSpot {
      */
     harvestPollen() {
         this.currentPollenLevel -= 1;
-        this.flowerLabel.textContent = `${Math.max(
-            0,
-            this.currentPollenLevel
-        )}`;
+
+        this.flowerPollenLvl.ariaValueNow = this.currentPollenLevel;
+        this.flowerPollenLvl.style.width = `${
+            (this.currentPollenLevel * 100) / 10
+        }%`;
+
         if (this.currentPollenLevel <= 0) {
             this.#disableFarmingSpot();
         }
@@ -97,8 +102,8 @@ export class FarmingSpot {
     }
 
     #disableFarmingSpot() {
-        //TODO implement
         this.isEnabled = false;
+        this.flowerPollenProgressBar.classList.add("hide");
     }
 
     // HTML events

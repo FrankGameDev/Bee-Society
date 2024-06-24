@@ -14,8 +14,16 @@ export class Enemy {
      *
      * @param {{position: THREE.Vector3}} options
      * @param {event} onDeathCallback
+     * @param {[]} farmingSpots
      */
-    constructor(options, onDeathCallback, farmingSpots, defendingBees) {
+    constructor(
+        options,
+        scene,
+        physicsWorld,
+        onDeathCallback,
+        farmingSpots,
+        defendingBees
+    ) {
         if (!options) console.error("enemy options not available");
         // mesh and body settings
         this.radius = 10;
@@ -32,7 +40,8 @@ export class Enemy {
         this.enemyMesh = undefined;
         this.enemyBody = undefined;
 
-        this.scene = null;
+        this.scene = scene;
+        this.physicsWorld = physicsWorld;
 
         //logic fields
         if (!onDeathCallback) throw new Error("Callback must be specified");
@@ -55,7 +64,9 @@ export class Enemy {
         this.isStealing = false;
         this.harvestingRoutine = null;
 
+        this.nextTargetPosition = undefined;
         this.hp = 10;
+        this.isEnabled = false;
     }
 
     // INIT =================================================
@@ -104,28 +115,38 @@ export class Enemy {
         this.enemyMesh.receiveShadow = shadowOptions.receiveShadow || false;
     }
 
-    async instantiate(scene, physicsWorld) {
+    async instantiate() {
         await this.#createRenderer();
         await this.#createBody();
 
-        scene.add(this.enemyMesh);
-        scene.add(this.enemyModel);
-        physicsWorld.addBody(this.enemyBody);
+        this.scene.add(this.enemyMesh);
+        this.scene.add(this.enemyModel);
+        this.physicsWorld.addBody(this.enemyBody);
         this.#bindMeshBody();
-
-        this.scene = scene;
     }
 
     // DAMAGING
     takeDamage(amount = 1) {
         this.hp -= amount;
-        if (this.hp <= 0) this.#die();
+        if (this.hp <= 0) this.die();
     }
 
-    #die() {
+    die() {
         //TODO: remove this enemy from the active enemies vector
+        this.scene.remove(this.enemyMesh);
+        this.scene.remove(this.enemyModel);
+        if (this.enemyMesh.geometry) {
+            this.enemyMesh.geometry.dispose();
+        }
+
+        if (this.enemyMesh.material) {
+            this.enemyMesh.material.dispose();
+        }
         this.enemyMesh = undefined;
+
+        this.enemyBody.world.removeBody(this.enemyBody);
         this.enemyBody = undefined;
+
         this.onDeathCallback(this);
     }
 
@@ -147,26 +168,62 @@ export class Enemy {
             3. If defending bot, attack and apply 1 damage per second.
             2. If farming spot, drain the pollen and disable it for 1 cycle
         */
+        this.#bindMeshBody();
+
+        if (!this.isEnabled) return;
 
         let nextDefender = undefined;
         let nextFarm = undefined;
         [nextDefender, nextFarm] = this.#getNearestObjectives();
-        const defenderDistance = nextDefender.beeMesh.position.distanceTo(
-            this.enemyMesh.position
-        );
-        const farmDistance = nextFarm.spotMesh.position.distanceTo(
-            this.enemyMesh.position
-        );
+        let defenderDistance = undefined;
+        let farmDistance = undefined;
+        if (nextDefender)
+            defenderDistance = nextDefender.beeMesh.position.distanceTo(
+                this.enemyMesh.position
+            );
+        if (farmDistance)
+            farmDistance = nextFarm.spotMesh.position.distanceTo(
+                this.enemyMesh.position
+            );
 
         if (!this.isAttacking && defenderDistance <= farmDistance) {
             this.#resetState();
+            this.nextTargetPosition = nextDefender.enemyMesh.position;
             this.#attackDefender(nextDefender);
         } else if (!this.isAttacking && !this.isStealing && nextFarm) {
             this.#resetState();
+            this.nextTargetPosition = nextFarm.spotMesh.position;
             this.#stealPollen(nextFarm);
-        } else throw new Error("No defender and farm found");
+        } else console.warn("No defender and farm found");
 
-        this.#bindMeshBody();
+        this.#moveTowardsTarget(this.nextTargetPosition);
+    }
+
+    /**
+     *
+     * @param {THREE.Vector3} target
+     */
+    #moveTowardsTarget(target) {
+        // if (this.enemyMesh.position.distanceTo(target) <= 50) {
+        //     this.enemyBody.velocity.set(0, 0, 0);
+        //     this.enemyBody.sleep();
+        //     return;
+        // }
+        let acceleration = new THREE.Vector3(
+            this.enemyBody.velocity.x,
+            this.enemyBody.velocity.y,
+            this.enemyBody.velocity.z
+        );
+        const targetVelocity = new THREE.Vector3()
+            .subVectors(target, this.enemyBody.position)
+            .normalize()
+            .multiplyScalar(minSpeed);
+
+        acceleration.add(targetVelocity);
+        if (acceleration.length() > maxSpeed) {
+            acceleration.normalize().multiplyScalar(maxSpeed);
+        }
+        this.enemyBody.velocity.copy(acceleration);
     }
 
     /**
@@ -177,15 +234,21 @@ export class Enemy {
         let nextDefender = this.#getNearestDefender();
         let nextFarm = this.#getNearestFarm();
 
-        return nextDefender, nextFarm;
+        return [nextDefender, nextFarm];
     }
 
     #getNearestFarm() {
-        let nearest = farmingSpots[0];
-        let minDistance = farmingSpots[0].spotMesh.position.distanceTo(
+        if (this.farmingSpots.length === 0) return null;
+        let filteredFarmingSpots = this.farmingSpots.filter(
+            (f) => f.currentPollenLevel > 0
+        );
+        if (filteredFarmingSpots.length === 0) return null;
+
+        let nearest = filteredFarmingSpots[0];
+        let minDistance = filteredFarmingSpots[0].spotMesh.position.distanceTo(
             this.enemyMesh.position
         );
-        this.farmingSpots.forEach((spot) => {
+        filteredFarmingSpots.forEach((spot) => {
             const distance = spot.spotMesh.position.distanceTo(
                 this.enemyMesh.position
             );
@@ -199,8 +262,9 @@ export class Enemy {
     }
 
     #getNearestDefender() {
-        let nearest = defendingBees[0];
-        let minDistance = defendingBees[0].beeMesh.position.distanceTo(
+        if (this.defendingBees.length === 0) return null;
+        let nearest = this.defendingBees[0];
+        let minDistance = this.defendingBees[0].beeMesh.position.distanceTo(
             this.enemyMesh.position
         );
         this.defendingBees.forEach((bee) => {
@@ -223,6 +287,14 @@ export class Enemy {
     #attackDefender(nextDefender) {
         if (this.isAttacking || this.attackingRoutine) return;
 
+        if (
+            this.enemyMesh.position.distanceTo(nextDefender.beeMesh.position) >
+            100
+        ) {
+            console.log("Reaching the target...");
+            return;
+        }
+
         this.isAttacking = true;
         this.nextDefender = nextDefender;
         this.attackingRoutine = setInterval(
@@ -244,7 +316,12 @@ export class Enemy {
 
     #stealPollen(nextFarm) {
         if (this.isStealing || this.harvestingRoutine) return;
-
+        if (
+            this.enemyMesh.position.distanceTo(nextFarm.spotMesh.position) > 100
+        ) {
+            console.log("Reaching the target...");
+            return;
+        }
         this.isStealing = true;
         this.nextFarm = nextFarm;
         const harvestingRoutine = setInterval(

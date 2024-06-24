@@ -1,4 +1,10 @@
 import * as THREE from "three";
+import { DayNightCycle } from "./World building/dayNightCycle";
+import { DefenderManager } from "./entities/defenders/defenderManager";
+import { EnemyManager } from "./entities/enemy/enemyManager";
+import { Farm } from "./World building/farm";
+import { UiManager } from "./ui/uiManager";
+import BeeSwarm from "./entities/bee/beeSwarm";
 
 // Multipliers amount
 const beeHarvestingSpeedThresholds = [1, 0.9, 0.8, 0.7, 0.5];
@@ -13,11 +19,16 @@ const upgradeCosts = {
 };
 /**
  * Defines game cycle logic and mantains information about currency and upgrades
+ * @param {DayNightCycle} dayNightCycle
+ * @param {Farm} farmManager
+ * @param {EnemyManager} enemyManager
+ * @param {DefenderManager} defenderManager
  */
 export class GameManager {
-    constructor(dayNightCycle, farmManager) {
-        this.dayNightCycle = dayNightCycle;
-        this.farmManager = farmManager;
+    constructor(scene, physicsWorld, sceneInitializer) {
+        this.scene = scene;
+        this.physicsWorld = physicsWorld;
+        this.sceneInitializer = sceneInitializer;
 
         this.pollenInfo = {
             _value: 100,
@@ -44,6 +55,62 @@ export class GameManager {
             beeHarvestingSpeedThresholds[this.beeHarvestSpeedLevel - 1];
     }
 
+    // INIT
+    async init() {
+        this.farm = new Farm(this.scene, this.physicsWorld);
+        await this.farm.createFarm();
+        console.log("farm loaded");
+
+        this.dayNightCycle = new DayNightCycle(
+            this.scene,
+            this.onDayState.bind(this),
+            this.onNightState.bind(this)
+        );
+        console.log("day night cycle loaded");
+        this.defenderManager = new DefenderManager();
+
+        this.enemyManager = new EnemyManager(
+            10,
+            {},
+            this.farm.farmingSpots,
+            [],
+            {
+                dimension: this.farm.getGroundDimension(),
+            }
+        );
+        await this.enemyManager.instantiateEnemies(
+            this.scene,
+            this.physicsWorld
+        );
+        console.log("Enemies loaded");
+
+        this.uiManager = new UiManager(this);
+        console.log("UI manager loaded");
+        this.swarm = new BeeSwarm(
+            5,
+            {
+                radius: 20,
+                mass: 1,
+                startPosition: new THREE.Vector3(100, 0, 0),
+                modelEnabled: true,
+            },
+            this.farm.farmingSpots,
+            this.scene,
+            this.physicsWorld,
+            this.sceneInitializer,
+            this
+        );
+        await this.swarm.instantiateFlock();
+        console.log("swarm loaded");
+    }
+
+    update() {
+        this.dayNightCycle.updateCycle();
+
+        this.swarm.update(this.farm.hiveMesh.position);
+    }
+    // Pollen handler
+
     addPollen(amount) {
         this.pollenInfo.pollenAmount += amount;
     }
@@ -53,6 +120,70 @@ export class GameManager {
             this.pollenInfo.pollenAmount - amount
         );
     }
+
+    // Game Cycle =================================================================
+
+    /**
+     * Set the day logic for the game
+     * - Despawn enemies and defenders
+     * - Enable bee for harvesting
+     */
+    onDayState() {
+        this.#despawnEnemies();
+        this.#despawnDefenders();
+        this.#enableDayUI();
+        this.#enableHarvesting();
+    }
+
+    /**
+     * Set the night logic for the game
+     * - Spawn enemies and defenders
+     * - Disable harvesting bees and upgrade ui
+     */
+    onNightState() {
+        this.#spawnDefenders();
+        this.#spawnEnemies();
+        this.#enableNightUI();
+        this.#disableHarvesting();
+    }
+
+    async #spawnEnemies() {
+        await this.enemyManager.instantiateEnemies(
+            this.scene,
+            this.physicsWorld
+        );
+    }
+
+    async #spawnDefenders() {
+        await this.defenderManager.instantiateDefenders(
+            this.scene,
+            this.physicsWorld
+        );
+    }
+
+    async #despawnEnemies() {
+        this.enemyManager.disableAll();
+    }
+
+    async #despawnDefenders() {
+        this.defenderManager.disableAll();
+    }
+
+    #enableDayUI() {
+        this.uiManager.showDayTimer();
+        this.uiManager.showUpgradeMenus();
+    }
+
+    #enableNightUI() {
+        this.uiManager.showNightTimer();
+        this.uiManager.hideUpgradeMenus();
+    }
+
+    #enableHarvesting() {}
+
+    #disableHarvesting() {}
+
+    // UPGRADES =================================================
 
     upgradeBeeMovementSpeed() {
         const upgradeCost = this.#getUpgradeCostBasedOnLevel("bee.movement");

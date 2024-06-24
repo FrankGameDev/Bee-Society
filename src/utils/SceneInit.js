@@ -51,11 +51,6 @@ export class SceneInit {
         this.stats.dom.className = "stats";
         document.body.appendChild(this.stats.dom);
 
-        // ambient light which is for the whole scene
-        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        this.ambientLight.castShadow = true;
-        this.scene.add(this.ambientLight);
-
         this.labelRenderer = new CSS2DRenderer();
         this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
         this.labelRenderer.domElement.style.position = "absolute";

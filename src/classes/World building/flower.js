@@ -5,7 +5,7 @@ import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
 const flowerGLTF = "/low_poly_flower/scene.gltf";
 const maxPollen = 10;
 
-export class FarmingSpot {
+export class Flower {
     constructor() {
         this.modelLoader = new GLTFCustomLoader();
         this.modelsToLoad = {

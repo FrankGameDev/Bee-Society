@@ -31,17 +31,26 @@ export class EnemyManager {
         for (let i = 0; i < this.enemyAmount; i++) {
             let enemy = new Enemy(
                 { position: this.#getRandomSpawnPosition() },
-                this.#removeReference,
+                scene,
+                physicsWorld,
+                this.#removeReference.bind(this),
                 this.farmingSpots,
                 this.defendingBees
             );
-            enemy.instantiate(scene, physicsWorld);
+            await enemy.instantiate();
+            enemy.isEnabled = true;
             this.enemiesReference.push(enemy);
         }
     }
 
     updateEnemies() {
         this.enemiesReference.forEach((e) => e.update());
+    }
+
+    disableAll() {
+        let enemiesReferenceCopy = [];
+        Object.assign(enemiesReferenceCopy, this.enemiesReference);
+        enemiesReferenceCopy.forEach((e) => e.die());
     }
 
     #removeReference(enemy) {
@@ -73,6 +82,6 @@ export class EnemyManager {
             z = (Math.random() - 0.5) * yDimension;
         }
 
-        return new THREE.Vector3(x, 50, z);
+        return new THREE.Vector3(x, 150, z);
     }
 }

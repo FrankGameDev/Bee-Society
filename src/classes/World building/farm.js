@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import { FarmingSpot } from "./farmingSpot";
+import { Flower } from "./flower";
 
 const planeDimension = { x: 10000, y: 10000 };
 
@@ -99,7 +99,7 @@ export class Farm {
             );
         }
         this.farmingSpotPositions.push(newPos);
-        let newFarmingSpot = new FarmingSpot();
+        let newFarmingSpot = new Flower();
         await newFarmingSpot.spawnFlower(newPos, this.scene);
         this.farmingSpots.push(newFarmingSpot);
     }
@@ -118,7 +118,7 @@ export class Farm {
         }
 
         for (const pos of this.farmingSpotPositions) {
-            let newFarmingSpot = new FarmingSpot();
+            let newFarmingSpot = new Flower();
             await newFarmingSpot.spawnFlower(pos, this.scene);
             this.farmingSpots.push(newFarmingSpot);
         }

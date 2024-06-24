@@ -21,9 +21,25 @@
             <div
                 id="top-ui"
                 class="top-ui position-relative w-100 h-auto d-flex justify-content-start align-items-start">
-                <div id="cycle" class="cycle position-absolute top-0 start-0">
-                    <img alt="day" class="day show" />
-                    <img alt="night" class="night hide" />
+                <div
+                    id="cycle"
+                    class="cycle position-absolute top-0 start-0 mt-3 mx-lg-2 w-25 h-100">
+                    <div id="day-progress" class="progress show">
+                        <div
+                            id="day-progress-bar"
+                            class="progress-bar bg-warning progress-bar-animated progress-bar-striped"
+                            role="progressbar">
+                            <p id="day-time" class="my-auto mx-auto"></p>
+                        </div>
+                    </div>
+                    <div id="night-progress" class="progress hide">
+                        <div
+                            id="night-progress-bar"
+                            class="progress-bar bg-black progress-bar-animated progress-bar-striped"
+                            role="progressbar">
+                            <p id="night-time" class="my-auto mx-auto"></p>
+                        </div>
+                    </div>
                 </div>
 
                 <div

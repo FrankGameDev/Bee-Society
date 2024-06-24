@@ -14,11 +14,52 @@ export class UiManager {
         this.gameManager.pollenInfo.registerListener(
             function (amount) {
                 this.pollenLevel.textContent = amount;
-                console.log("test");
             }.bind(this)
         );
 
         // Day/night cycle
+        this.dayProgress = document.getElementById("day-progress");
+        this.dayProgressBar = document.getElementById("day-progress-bar");
+        this.dayProgressBar.style.width = `${Math.floor(
+            this.gameManager.dayNightCycle.dayAndNightDuration
+        )}%`;
+        this.dayProgressBar.ariaValueMax = Math.floor(
+            this.gameManager.dayNightCycle.dayAndNightDuration
+        );
+        this.dayProgressBar.ariaValueMin = 0;
+        this.dayProgressBar.ariaValueNow = Math.floor(
+            this.gameManager.dayNightCycle.dayAndNightDuration
+        );
+
+        this.dayTimer = document.getElementById("day-time");
+        this.gameManager.dayNightCycle.timerInfo.registerListener(
+            function (amount) {
+                this.dayTimer.textContent = Math.floor(amount).toString();
+                this.dayProgressBar.style.width = `${Math.floor(amount)}%`;
+                this.dayProgressBar.ariaValueNow = Math.floor(amount);
+            }.bind(this)
+        );
+
+        this.nightProgress = document.getElementById("night-progress");
+        this.nightProgressBar = document.getElementById("night-progress-bar");
+        this.nightProgressBar.style.width = `${Math.floor(
+            this.gameManager.dayNightCycle.dayAndNightDuration
+        )}%`;
+        this.dayProgressBar.ariaValueMax = Math.floor(
+            this.gameManager.dayNightCycle.dayAndNightDuration
+        );
+        this.dayProgressBar.ariaValueMin = 0;
+        this.dayProgressBar.ariaValueNow = Math.floor(
+            this.gameManager.dayNightCycle.dayAndNightDuration
+        );
+        this.nightTimer = document.getElementById("night-time");
+        this.gameManager.dayNightCycle.timerInfo.registerListener(
+            function (amount) {
+                this.nightTimer.textContent = Math.floor(amount).toString();
+                this.nightProgressBar.style.width = `${Math.floor(amount)}%`;
+                this.nightProgressBar.ariaValueNow = Math.floor(amount);
+            }.bind(this)
+        );
 
         // Buttons for upgrades =================
 
@@ -81,7 +122,36 @@ export class UiManager {
         );
     }
 
+    // Day Night cycle
+    showDayTimer() {
+        this.dayProgressBar.classList.toggle("hide", false);
+        this.dayProgressBar.classList.toggle("show", true);
+
+        this.nightProgressBar.classList.toggle("show", false);
+        this.nightProgressBar.classList.toggle("hide", true);
+    }
+
+    showNightTimer() {
+        this.nightProgressBar.classList.toggle("show", true);
+        this.nightProgressBar.classList.toggle("hide", false);
+
+        this.dayProgressBar.classList.toggle("hide", true);
+        this.dayProgressBar.classList.toggle("show", false);
+    }
+
     // UPGRADES  ===========
+
+    showUpgradeMenus() {
+        this.#toggleButtonVisibility(this.beeUpgradeButton, true);
+        this.#toggleButtonVisibility(this.defenderUpgradeButton, true);
+        this.#toggleButtonVisibility(this.farmUpgradeButton, true);
+    }
+
+    hideUpgradeMenus() {
+        this.#toggleButtonVisibility(this.beeUpgradeButton, false);
+        this.#toggleButtonVisibility(this.defenderUpgradeButton, false);
+        this.#toggleButtonVisibility(this.farmUpgradeButton, false);
+    }
 
     #toggleMenu(menu, buttonsToHide) {
         console.log(`Toggle menu: ${menu.id}`);

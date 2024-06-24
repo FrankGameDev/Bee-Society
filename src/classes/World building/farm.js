@@ -90,6 +90,20 @@ export class Farm {
         this.hiveBody.position.copy(this.hiveMesh.position);
     }
 
+    async generateNewFarmingSpot() {
+        let newPos = null;
+        let tmp;
+        while (!newPos) {
+            [newPos, tmp] = this.#getNewFlowerPosition(
+                this.farmingSpotPositions.length
+            );
+        }
+        this.farmingSpotPositions.push(newPos);
+        let newFarmingSpot = new FarmingSpot();
+        await newFarmingSpot.spawnFlower(newPos, this.scene);
+        this.farmingSpots.push(newFarmingSpot);
+    }
+
     /**
      * First, generate all the farming spot positions, in order to don't have to worry about colliding spots
      * Then, instantiate it
@@ -98,16 +112,9 @@ export class Farm {
     async #generateFarmingSpot(farmingSpotCount) {
         let count = 0;
         while (count < farmingSpotCount) {
-            const randomPos = this.#getRandomPositionOnGround();
-            if (
-                !this.farmingSpotPositions.find(
-                    (pos) =>
-                        pos === randomPos || randomPos.distanceTo(pos) < 250 //TODO: Handle this
-                )
-            ) {
-                this.farmingSpotPositions.push(randomPos);
-                count += 1;
-            }
+            let newPos = null;
+            [newPos, count] = this.#getNewFlowerPosition(count);
+            if (newPos) this.farmingSpotPositions.push(newPos);
         }
 
         for (const pos of this.farmingSpotPositions) {
@@ -115,6 +122,18 @@ export class Farm {
             await newFarmingSpot.spawnFlower(pos, this.scene);
             this.farmingSpots.push(newFarmingSpot);
         }
+    }
+
+    #getNewFlowerPosition(count) {
+        const randomPos = this.#getRandomPositionOnGround();
+        if (
+            !this.farmingSpotPositions.find(
+                (pos) => pos === randomPos || randomPos.distanceTo(pos) < 250
+            )
+        ) {
+            return [randomPos, count + 1];
+        }
+        return [null, count];
     }
 
     #getRandomPositionOnGround() {

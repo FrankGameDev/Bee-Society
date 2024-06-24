@@ -9,13 +9,15 @@ const upgradeCosts = {
         harvest: [10, 12, 15, 18, 20],
     },
     defender: {},
+    farm: { newFlower: 15 },
 };
 /**
  * Defines game cycle logic and mantains information about currency and upgrades
  */
 export class GameManager {
-    constructor(dayNightCycle) {
+    constructor(dayNightCycle, farmManager) {
         this.dayNightCycle = dayNightCycle;
+        this.farmManager = farmManager;
 
         this.pollenInfo = {
             _value: 100,
@@ -37,9 +39,9 @@ export class GameManager {
         this.beeHarvestSpeedLevel = 1;
         this.beeMovementSpeedLevel = 1;
         this.getBeeMovementSpeedMultiplier = () =>
-            beeMovementSpeedThresholds[this.beeMovementSpeedLevel];
+            beeMovementSpeedThresholds[this.beeMovementSpeedLevel - 1];
         this.getBeeHarvestSpeedMultiplier = () =>
-            beeHarvestingSpeedThresholds[this.beeHarvestSpeedLevel];
+            beeHarvestingSpeedThresholds[this.beeHarvestSpeedLevel - 1];
     }
 
     addPollen(amount) {
@@ -88,6 +90,17 @@ export class GameManager {
         this.beeHarvestSpeedLevel += 1;
     }
 
+    generateNewFarmingSpot() {
+        const upgradeCost = this.#getUpgradeCostBasedOnLevel("farm.newFlower");
+        if (upgradeCost == -1 || this.pollenInfo.pollenAmount < upgradeCost) {
+            console.error("Not enough pollen to upgrade");
+            return;
+        }
+
+        this.removePollen(upgradeCost);
+        this.farmManager.generateNewFarmingSpot();
+    }
+
     // UTILITY
     #getUpgradeCostBasedOnLevel(upgradeName) {
         switch (upgradeName) {
@@ -103,6 +116,8 @@ export class GameManager {
                 if (upgradeCosts.bee.harvest.length < this.beeHarvestSpeedLevel)
                     return -1;
                 return upgradeCosts.bee.harvest[this.beeHarvestSpeedLevel];
+            case "farm.newFlower":
+                return upgradeCosts.farm.newFlower;
         }
     }
 }

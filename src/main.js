@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import SceneInit from "./utils/sceneInit";
+import { SceneInit } from "./utils/SceneInit";
 import Obstacle from "./classes/unused/Obstacle";
 import CannonDebugger from "cannon-es-debugger";
 import BoxDrawer from "./classes/unused/BoxDrawer";
@@ -58,7 +58,7 @@ async function loadAll() {
     // await enemiesManager.instantiateEnemies(scene, physicsWorld);
     // console.log("Enemies loaded");
 
-    gameManager = new GameManager(dayNightCycle);
+    gameManager = new GameManager(dayNightCycle, farm);
     console.log("Game manager loaded");
     uiManager = new UiManager(gameManager);
     console.log("UI manager loaded");

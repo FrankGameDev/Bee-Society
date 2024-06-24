@@ -10,7 +10,6 @@ export class UiManager {
 
         // Pollen level
         this.pollenLevel = document.getElementById("pollen-currency");
-        //FIXME use a watch for this
         this.pollenLevel.textContent = this.gameManager.pollenInfo.pollenAmount;
         this.gameManager.pollenInfo.registerListener(
             function (amount) {
@@ -64,28 +63,49 @@ export class UiManager {
         this.defenderUpgradeMenu = document.getElementById(
             "defender-upgrade-menu"
         );
+
+        // Farm upgrade
+        this.farmUpgradeButton = document.getElementById(
+            "farm-upgrade-menu-button"
+        );
+        this.farmUpgradeButton.addEventListener(
+            "click",
+            this.#openFarmUpgradeMenu.bind(this)
+        );
+        this.farmUpgradeMenu = document.getElementById("farm-upgrade-menu");
+        this.newFlowerUpgradeButton =
+            document.getElementById("farm-spot-upgrade");
+        this.newFlowerUpgradeButton.addEventListener(
+            "click",
+            this.#newFlowerSpot.bind(this)
+        );
     }
 
     // UPGRADES  ===========
 
-    #openBeeUpgradeMenu() {
-        console.log("Open bee upgrade menu");
+    #toggleMenu(menu, buttonsToHide) {
+        console.log(`Toggle menu: ${menu.id}`);
 
-        //if hidden
-        if (this.beeUpgradeMenu.classList.contains("hidden")) {
-            this.beeUpgradeMenu.classList.remove("hidden");
-            this.beeUpgradeMenu.classList.add("visible");
-            this.defenderUpgradeButton.classList.add("hidden");
-            this.defenderUpgradeButton.classList.remove("visible");
-        } else {
-            //if visible
-            this.beeUpgradeMenu.classList.remove("visible");
-            this.beeUpgradeMenu.classList.add("hidden");
-            this.defenderUpgradeButton.classList.add("visible");
-            this.defenderUpgradeButton.classList.remove("hidden");
-        }
+        const isHidden = menu.classList.contains("hidden");
+        menu.classList.toggle("hidden", !isHidden);
+        menu.classList.toggle("visible", isHidden);
+
+        buttonsToHide.forEach((button) => {
+            this.#toggleButtonVisibility(button, !isHidden);
+        });
     }
 
+    #toggleButtonVisibility(button, isVisible) {
+        button.classList.toggle("visible", isVisible);
+        button.classList.toggle("hidden", !isVisible);
+    }
+
+    #openBeeUpgradeMenu() {
+        this.#toggleMenu(this.beeUpgradeMenu, [
+            this.defenderUpgradeButton,
+            this.farmUpgradeButton,
+        ]);
+    }
     #upgradeBeeMovement() {
         this.gameManager.upgradeBeeMovementSpeed();
     }
@@ -95,19 +115,20 @@ export class UiManager {
     }
 
     #openDefenderUpgradeMenu() {
-        console.log("open defender upgrade menu");
+        this.#toggleMenu(this.defenderUpgradeMenu, [
+            this.beeUpgradeButton,
+            this.farmUpgradeButton,
+        ]);
+    }
 
-        if (this.defenderUpgradeMenu.classList.contains("hidden")) {
-            this.defenderUpgradeMenu.classList.remove("hidden");
-            this.defenderUpgradeMenu.classList.add("visible");
-            this.beeUpgradeButton.classList.add("hidden");
-            this.beeUpgradeButton.classList.remove("visible");
-        } else {
-            //if visible
-            this.defenderUpgradeMenu.classList.remove("visible");
-            this.defenderUpgradeMenu.classList.add("hidden");
-            this.beeUpgradeButton.classList.add("visible");
-            this.beeUpgradeButton.classList.remove("hidden");
-        }
+    #openFarmUpgradeMenu() {
+        this.#toggleMenu(this.farmUpgradeMenu, [
+            this.beeUpgradeButton,
+            this.defenderUpgradeButton,
+        ]);
+    }
+
+    #newFlowerSpot() {
+        this.gameManager.generateNewFarmingSpot();
     }
 }

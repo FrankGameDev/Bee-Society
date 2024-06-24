@@ -42,10 +42,20 @@ export default class Bee {
             startingMinSpeed * this.gameManager.getBeeMovementSpeedMultiplier();
         this.maxSpeed = () =>
             startingMaxSpeed * this.gameManager.getBeeMovementSpeedMultiplier();
-        this.harvestingSpeed = () =>
-            startingHarvestingSpeed *
-            this.gameManager.getBeeHarvestSpeedMultiplier *
-            1000;
+        this.harvestingSpeed = () => {
+            console.log(
+                `harvesting speed: ${
+                    startingHarvestingSpeed *
+                    this.gameManager.getBeeHarvestSpeedMultiplier() *
+                    1000
+                }`
+            );
+            return (
+                startingHarvestingSpeed *
+                this.gameManager.getBeeHarvestSpeedMultiplier() *
+                1000
+            );
+        };
 
         this.modelEnabled = options.modelEnabled;
         this.modelLoader = new GLTFCustomLoader();

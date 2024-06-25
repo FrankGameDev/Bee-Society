@@ -2,8 +2,8 @@ import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 
-const minSpeed = 1500;
-const maxSpeed = 2000;
+const minSpeed = 100;
+const maxSpeed = 250;
 
 const beeModelPath = "/bee_2/scene.gltf";
 
@@ -45,6 +45,7 @@ export default class DefenderBee {
         this.onEnemyKillCallback = callbacks.onEnemyKillCallback;
 
         this.hp = 10;
+        this.isAttacking = false;
     }
 
     // INITIALIZATION =================================================================
@@ -73,20 +74,14 @@ export default class DefenderBee {
             this.beeModel = model.scene.children[0].clone();
         }
 
-        if (!this.beeModel) {
-            const geometry = new THREE.SphereGeometry(this.radius);
-            const material = new THREE.MeshToonMaterial({ color: this.color });
-            this.beeMesh = new THREE.Mesh(geometry, material);
-        } else {
-            const geometry = new THREE.SphereGeometry(this.radius);
-            const material = new THREE.MeshBasicMaterial({
-                wireframe: true,
-                opacity: 0,
-            });
-            this.beeMesh = new THREE.Mesh(geometry, material);
+        const geometry = new THREE.SphereGeometry(this.radius);
+        const material = new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0,
+        });
+        this.beeMesh = new THREE.Mesh(geometry, material);
+        if (this.beeModel) this.beeMesh.add(this.beeModel);
 
-            this.beeModel.position.copy(this.beeMesh);
-        }
         this.beeMesh.castShadow = shadowOptions.castShadow || false;
         this.beeMesh.receiveShadow = shadowOptions.receiveShadow || false;
     }
@@ -96,7 +91,6 @@ export default class DefenderBee {
         await this.#createBody();
 
         this.scene.add(this.beeMesh);
-        this.scene.add(this.beeModel);
         this.physicsWorld.addBody(this.beeBody);
         this.#bindMeshBody();
     }
@@ -106,11 +100,6 @@ export default class DefenderBee {
     #bindMeshBody() {
         this.beeMesh.position.copy(this.beeBody.position);
         this.beeMesh.quaternion.copy(this.beeBody.quaternion);
-
-        if (this.beeModel) {
-            this.beeModel.position.copy(this.beeBody.position);
-            this.beeModel.quaternion.copy(this.beeBody.quaternion);
-        }
     }
 
     //TODO: Add turn velocity and wander logic
@@ -119,6 +108,7 @@ export default class DefenderBee {
         this.nearestEnemy = this.#reachNearestEnemy();
 
         if (
+            !this.isAttacking &&
             this.nearestEnemy &&
             this.nearestEnemy.enemyMesh.position.distanceTo(
                 this.beeMesh.position
@@ -136,8 +126,8 @@ export default class DefenderBee {
     }
 
     die() {
+        this.#resetState();
         this.scene.remove(this.beeMesh);
-        this.scene.remove(this.beeModel);
         if (this.beeMesh.geometry) {
             this.beeMesh.geometry.dispose();
         }
@@ -199,13 +189,39 @@ export default class DefenderBee {
 
     #attackEnemy() {
         if (!this.nearestEnemy) {
-            console.log("No enemy near me");
+            console.log("No enemy near");
+            return;
         }
-        //TODO implement attack logic
-        this.nearestEnemy.takeDamage(1);
-        if (this.nearestEnemy.hp <= 0) {
-            this.onEnemyKillCallback(this.nearestEnemy);
-            this.nearestEnemy = null;
-        }
+        if (this.isAttacking) return;
+
+        this.isAttacking = true;
+        this.attackingRoutine = setInterval(
+            function () {
+                this.nearestEnemy.takeDamage(1);
+                if (this.nearestEnemy.hp <= 0) {
+                    this.onEnemyKillCallback(this.nearestEnemy);
+                    this.nearestEnemy = null;
+                    this.isAttacking = false;
+                    clearInterval(this.attackingRoutine);
+                    this.attackingRoutine = null;
+                }
+            }.bind(this),
+            1000
+        );
+    }
+
+    onEnemyKilledReset(killedEnemy) {
+        if (
+            this.isAttacking &&
+            this.nearestEnemy &&
+            this.nearestEnemy === killedEnemy
+        )
+            this.#resetState();
+    }
+
+    #resetState() {
+        if (this.attackingRoutine) clearInterval(this.attackingRoutine);
+        this.attackingRoutine = undefined;
+        this.isAttacking = false;
     }
 }

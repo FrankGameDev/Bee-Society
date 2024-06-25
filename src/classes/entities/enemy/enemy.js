@@ -3,24 +3,23 @@ import * as CANNON from "cannon-es";
 import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 
 const minSpeed = 100;
-const maxSpeed = 500;
+const maxSpeed = 250;
 const damage = 1;
-let damageMultiplier = 1; // Multiplier slightly increasing each cycle // TODO bind with cycle logic
 
 const enemyModelPath = "/bee_low_poly/scene.gltf";
 
 export class Enemy {
     /**
      *
-     * @param {{position: THREE.Vector3}} options
-     * @param {event} onDeathCallback
+     * @param {{position: THREE.Vector3, damageMultiplier: number}} options
+     * @param {{onDeathCallback: event, onDefenderKill: event}} callbacks
      * @param {[]} farmingSpots
      */
     constructor(
         options,
         scene,
         physicsWorld,
-        onDeathCallback,
+        callbacks,
         farmingSpots,
         defendingBees
     ) {
@@ -44,8 +43,9 @@ export class Enemy {
         this.physicsWorld = physicsWorld;
 
         //logic fields
-        if (!onDeathCallback) throw new Error("Callback must be specified");
-        this.onDeathCallback = onDeathCallback;
+        if (!callbacks) throw new Error("Callbacks must be specified");
+        this.onDeathCallback = callbacks.onDeathCallback;
+        this.onDefenderKill = callbacks.onDefenderKill;
 
         if (!farmingSpots)
             throw new Error("Farming spots reference are required");
@@ -67,6 +67,7 @@ export class Enemy {
         this.nextTargetPosition = undefined;
         this.hp = 10;
         this.isEnabled = false;
+        this.damageMultiplier = options.damageMultiplier; // Multiplier slightly increasing each cycle
     }
 
     // INIT =================================================
@@ -94,23 +95,17 @@ export class Enemy {
             );
             this.enemyModel = model.scene.children[0].clone();
             this.enemyModel.scale.multiplyScalar(10);
+            this.enemyModel.rotation.z = Math.PI / 2; //Rotates the model in order to face the right target
         }
 
         //If there is an error during loading the model
-        if (!this.enemyModel) {
-            const geometry = new THREE.SphereGeometry(this.radius);
-            const material = new THREE.MeshToonMaterial({ color: this.color });
-            this.enemyMesh = new THREE.Mesh(geometry, material);
-        } else {
-            const geometry = new THREE.SphereGeometry(this.radius);
-            const material = new THREE.MeshBasicMaterial({
-                wireframe: true,
-                opacity: 1,
-            });
-            this.enemyMesh = new THREE.Mesh(geometry, material);
-
-            this.enemyModel.position.copy(this.enemyMesh.position);
-        }
+        const geometry = new THREE.SphereGeometry(this.radius);
+        const material = new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0,
+        });
+        this.enemyMesh = new THREE.Mesh(geometry, material);
+        if (this.enemyModel) this.enemyMesh.add(this.enemyModel);
         this.enemyMesh.castShadow = shadowOptions.castShadow || false;
         this.enemyMesh.receiveShadow = shadowOptions.receiveShadow || false;
     }
@@ -120,7 +115,6 @@ export class Enemy {
         await this.#createBody();
 
         this.scene.add(this.enemyMesh);
-        this.scene.add(this.enemyModel);
         this.physicsWorld.addBody(this.enemyBody);
         this.#bindMeshBody();
     }
@@ -134,7 +128,6 @@ export class Enemy {
     die() {
         this.#resetState();
         this.scene.remove(this.enemyMesh);
-        this.scene.remove(this.enemyModel);
         if (this.enemyMesh.geometry) {
             this.enemyMesh.geometry.dispose();
         }
@@ -155,11 +148,6 @@ export class Enemy {
     #bindMeshBody() {
         this.enemyMesh.position.copy(this.enemyBody.position);
         this.enemyMesh.quaternion.copy(this.enemyBody.quaternion);
-
-        if (this.enemyModel) {
-            this.enemyModel.position.copy(this.enemyBody.position);
-            this.enemyModel.quaternion.copy(this.enemyBody.quaternion);
-        }
     }
 
     update() {
@@ -299,10 +287,10 @@ export class Enemy {
         this.nextDefender = nextDefender;
         this.attackingRoutine = setInterval(
             function () {
-                this.nextDefender.takeDamage();
+                this.nextDefender.takeDamage(damage * this.damageMultiplier);
                 console.log("Enemy attacking...");
-                //TODO Update UI
                 if (this.nextDefender.health <= 0) {
+                    this.onDefenderKill(this.nextDefender);
                     this.nextDefender = null;
                     this.isAttacking = false;
                     console.log("Ending attacking...");
@@ -328,7 +316,6 @@ export class Enemy {
             function () {
                 this.nextFarm.harvestPollen();
                 console.log("Enemy stealing pollen...");
-                //TODO Update UI
                 if (this.nextFarm.currentPollenLevel <= 0) {
                     this.nextFarm.wasAttacked = true;
                     this.nextFarm = null;

@@ -45,7 +45,7 @@ export class Flower {
             );
             this.spotMesh.position.set(
                 flower.position.x,
-                10,
+                flower.position.y + flower.scale.y * 2,
                 flower.position.z
             );
             this.spotMesh.scale.copy(flower.scale);

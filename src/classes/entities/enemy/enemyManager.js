@@ -17,15 +17,27 @@ export class EnemyManager {
         this.enemiesReference = [];
     }
 
-    async instantiateEnemies(farmingSpots, defenderBeesReference) {
+    /**
+     *
+     * @param {[]} farmingSpots
+     * @param {[]} defenderBeesReference
+     * @param {number} cycleCount current cycle
+     */
+    async instantiateEnemies(farmingSpots, defenderBeesReference, cycleCount) {
         this.farmingSpots = farmingSpots;
         this.defenderBeesReference = defenderBeesReference;
         for (let i = 0; i < this.enemyAmount; i++) {
             let enemy = new Enemy(
-                { position: this.#getRandomSpawnPosition() },
+                {
+                    position: this.#getRandomSpawnPosition(),
+                    damageMultiplier: 1 + cycleCount * 0.2,
+                },
                 this.scene,
                 this.physicsWorld,
-                this.#removeReference.bind(this),
+                {
+                    onDeathCallback: this.#removeReference.bind(this),
+                    onDefenderKill: this.#removeDefender.bind(this),
+                },
                 this.farmingSpots,
                 this.defenderBeesReference
             );
@@ -36,6 +48,7 @@ export class EnemyManager {
     }
 
     async setDefendersReference(defenderBeesReference) {
+        this.defenderBeesReference = defenderBeesReference;
         this.enemiesReference.forEach(
             (enemy) => (enemy.defendingBees = defenderBeesReference)
         );
@@ -55,6 +68,18 @@ export class EnemyManager {
         this.enemiesReference = this.enemiesReference.filter(
             (e) => e !== enemy
         );
+    }
+
+    async #removeDefender(defenderToRemove) {
+        if (!this.defenderBeesReference) {
+            console.log("Defenders reference is empty");
+            return;
+        }
+
+        this.defenderBeesReference = this.defenderBeesReference.filter(
+            (defender) => defender !== defenderToRemove
+        );
+        await this.setDefendersReference(this.defenderBeesReference);
     }
 
     #getRandomSpawnPosition() {

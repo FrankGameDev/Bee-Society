@@ -86,7 +86,7 @@ export class GameManager {
         console.log("UI manager loaded");
 
         this.swarm = new BeeSwarm(
-            5,
+            100,
             {
                 radius: 20,
                 mass: 1,
@@ -177,7 +177,8 @@ export class GameManager {
     async #spawnEnemies() {
         await this.enemyManager.instantiateEnemies(
             this.farm.farmingSpots,
-            this.defenderManager.defenderReference
+            this.defenderManager.defenderReference,
+            this.dayNightCycle.cycleCount
         );
     }
 

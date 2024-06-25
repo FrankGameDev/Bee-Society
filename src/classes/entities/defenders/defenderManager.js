@@ -52,6 +52,9 @@ export class DefenderManager {
 
         this.enemies = this.enemies.filter((enemy) => enemy !== enemyToRemove);
         this.setEnemyReference(this.enemies);
+        this.defenderReference.forEach((d) =>
+            d.onEnemyKilledReset(enemyToRemove)
+        );
     }
 
     #removeReference(defender) {

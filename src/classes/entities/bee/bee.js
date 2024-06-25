@@ -9,7 +9,7 @@ const startingHarvestingSpeed = 1; //seconds
 const cohesionWeight = 0.3;
 const separationWeight = 500;
 const alignmentWeight = 0.1;
-const obstacleAvoidanceWeight = 0;
+const wanderWeight = 5;
 
 const separationRange = 50;
 const cohesionRange = 50;
@@ -107,22 +107,25 @@ export default class Bee {
             );
             this.beeModel = model.scene.children[0].clone();
             this.beeModel.scale.multiplyScalar(5);
+            this.beeModel.rotation.z = Math.PI / 2; //Rotates the model in order to face the right target
         }
 
-        if (!this.beeModel) {
-            const geometry = new THREE.SphereGeometry(this.radius);
-            const material = new THREE.MeshToonMaterial({ color: this.color });
-            this.beeMesh = new THREE.Mesh(geometry, material);
-        } else {
-            const geometry = new THREE.SphereGeometry(this.radius);
-            const material = new THREE.MeshBasicMaterial({
-                wireframe: true,
-                opacity: 0,
-            });
-            this.beeMesh = new THREE.Mesh(geometry, material);
+        const geometry = new THREE.SphereGeometry(this.radius);
+        const material = new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0,
+        });
+        this.beeMesh = new THREE.Mesh(geometry, material);
+        if (this.beeModel) this.beeMesh.add(this.beeModel);
+        const axisSize = 20;
+        const axisHelper = new THREE.AxesHelper(axisSize);
+        axisHelper.setColors(
+            new THREE.Color("red"),
+            new THREE.Color("blue"),
+            new THREE.Color("green")
+        );
+        this.beeMesh.add(axisHelper);
 
-            this.beeModel.position.copy(this.beeMesh);
-        }
         this.beeMesh.castShadow = shadowOptions.castShadow || false;
         this.beeMesh.receiveShadow = shadowOptions.receiveShadow || false;
     }
@@ -132,36 +135,30 @@ export default class Bee {
         await this.#createBody();
 
         this.scene.add(this.beeMesh);
-        this.scene.add(this.beeModel);
         this.physicsWorld.addBody(this.beeBody);
-        this.#bindMeshBody();
+        this.#bindMeshBody(this.startPosition);
 
         addEventListener("click", this.#onMouseClick.bind(this), false);
     }
 
     // UPDATE LOGIC =================================================
 
-    #bindMeshBody() {
+    #bindMeshBody(lookAtTarget) {
         this.beeMesh.position.copy(this.beeBody.position);
-        this.beeMesh.quaternion.copy(this.beeBody.quaternion);
-
-        if (this.beeModel) {
-            this.beeModel.position.copy(this.beeBody.position);
-            this.beeModel.quaternion.copy(this.beeBody.quaternion);
-        }
+        this.beeMesh.lookAt(lookAtTarget);
     }
 
     //TODO: Add turn velocity and wander logic
     update(neighbors, target) {
+        let nextTarget = target.clone();
+        if (this.nextHarvestingSpot) {
+            nextTarget.copy(this.nextHarvestingSpot.spotMesh.position);
+            nextTarget.y += 150;
+        }
         //Locomotion
-        let acceleration = this.#applyBoidAlghoritm(
-            this.nextHarvestingSpot
-                ? this.nextHarvestingSpot.spotMesh.position
-                : target,
-            neighbors
-        );
+        let acceleration = this.#applyBoidAlghoritm(nextTarget, neighbors);
         this.beeBody.velocity.copy(acceleration);
-        this.#bindMeshBody();
+        this.#bindMeshBody(nextTarget);
 
         // Harvesting logic
         if (this.nextHarvestingSpot) {
@@ -170,10 +167,9 @@ export default class Bee {
     }
 
     enable(position = this.startPosition) {
-        if (!this.beeMesh || !this.beeModel || !this.beeBody) return;
+        if (!this.beeMesh || !this.beeBody) return;
 
         this.scene.add(this.beeMesh);
-        this.scene.add(this.beeModel);
         this.physicsWorld.addBody(this.beeBody);
 
         this.beeBody.position.copy(position);
@@ -181,7 +177,6 @@ export default class Bee {
 
     disable() {
         this.scene.remove(this.beeMesh);
-        this.scene.remove(this.beeModel);
         this.physicsWorld.removeBody(this.beeBody);
     }
 
@@ -219,7 +214,7 @@ export default class Bee {
         if (
             this.beeMesh.position.distanceTo(
                 this.nextHarvestingSpot.spotMesh.position
-            ) > 100
+            ) > 300
         ) {
             console.log("Reaching the target...");
             return;
@@ -274,31 +269,19 @@ export default class Bee {
             this.#alignment(neighbors).multiplyScalar(alignmentWeight);
         const cohesionVelocity =
             this.#cohesion(neighbors).multiplyScalar(cohesionWeight);
-        // let obstacleAvoidanceVelocity = this.#obstacleAvoidance(
-        //     obstacles
-        // ).multiplyScalar(obstacleAvoidanceWeight);
-
-        // // Esempio di visualizzazione delle forze di evitamento degli ostacoli
-        // let obstacleAvoidanceArrow = new THREE.ArrowHelper(
-        //     obstacleAvoidanceVelocity.clone().normalize(),
-        //     this.beeMesh.position,
-        //     obstacleAvoidanceVelocity.length(),
-        //     0xffff00
-        // );
-        // this.scene.add(obstacleAvoidanceArrow);
-        // this.acceleration.add(obstacleAvoidanceVelocity);
+        const wanderVelocity = this.#wander().multiplyScalar(wanderWeight);
 
         acceleration.add(separationVelocity);
         acceleration.add(alignmentVelocity);
         acceleration.add(cohesionVelocity);
         acceleration.add(targetVelocity);
+        acceleration.add(wanderVelocity);
         //TODO handle rotation only towards the target and, if its touching something, based on the dot product
 
         // limit velocity
         if (acceleration.length() > this.maxSpeed()) {
             acceleration.normalize().multiplyScalar(this.maxSpeed());
         }
-
         return acceleration;
     }
     /**
@@ -385,65 +368,35 @@ export default class Bee {
 
         return avgPosition;
     }
-
     /**
-     * Obstacle avoidance logic using raycasting
-     * @param {THREE.Mesh[]} obstacles
-     * @returns {THREE.Vector3} velocity vector for obstacle avoidance
+     * Wander logic
+     * @returns {THREE.Vector3} velocity vector for wandering
      */
-    #obstacleAvoidance(obstacles) {
-        const avoidanceForce = new THREE.Vector3();
-        let detectedObstacles = this.#detectObstacles(obstacles);
-        const speed = this.beeBody.velocity.length();
+    #wander() {
+        const wanderDistance = 500;
+        const wanderJitter = 50;
 
-        // Esegui il calcolo solo se il boid si sta muovendo
-        if (speed <= this.minSpeed()) return new THREE.Vector3();
-        detectedObstacles.forEach((obstacle) => {
-            const toObstacle = new THREE.Vector3().subVectors(
-                obstacle.position,
-                this.beeMesh.position
-            );
-            const distance = toObstacle.length();
+        const randomVector = new THREE.Vector3(
+            (Math.random() - 0.5) * 2,
+            (Math.random() - 0.5) * 2,
+            (Math.random() - 0.5) * 2
+        )
+            .normalize()
+            .multiplyScalar(wanderJitter);
 
-            if (distance > 0 && distance < obstacleRange) {
-                const toBoid = new THREE.Vector3().subVectors(
-                    this.beeMesh.position,
-                    obstacle.position
-                );
-                avoidanceForce.add(
-                    toBoid.divideScalar(distance).divideScalar(distance)
-                );
-            }
-        });
-
-        return avoidanceForce;
-    }
-
-    /**
-     *
-     * @param {THREE.Mesh[]} obstacles
-     * @returns {THREE.Mesh[]}
-     */
-    #detectObstacles(obstacles) {
-        let detectedObstacles = [];
-
-        // Define the boid's bounding sphere
-        const boidBoundingSphere = new THREE.Sphere(
-            this.beeMesh.position,
-            this.detectionRadius
+        let normalizedVelocity = new THREE.Vector3();
+        normalizedVelocity.set(
+            this.beeBody.velocity.x,
+            this.beeBody.velocity.y,
+            this.beeBody.velocity.z
         );
+        normalizedVelocity = normalizedVelocity.normalize();
 
-        obstacles.forEach((obstacle) => {
-            const obstacleBoundingSphere = new THREE.Sphere();
-            obstacle.geometry.computeBoundingSphere();
-            obstacleBoundingSphere.copy(obstacle.geometry.boundingSphere);
-            obstacleBoundingSphere.applyMatrix4(obstacle.matrixWorld);
+        const circleCenter = normalizedVelocity.multiplyScalar(wanderDistance);
 
-            if (boidBoundingSphere.intersectsSphere(obstacleBoundingSphere)) {
-                detectedObstacles.push(obstacle);
-            }
-        });
+        // Combine the circle center and the random vector to get the wander force
+        const wanderForce = circleCenter.add(randomVector);
 
-        return detectedObstacles;
+        return wanderForce;
     }
 }

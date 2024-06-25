@@ -1,10 +1,10 @@
 import * as THREE from "three";
 import { Timer } from "three/addons/misc/Timer.js";
 
-const dayAndNightDuration = 20; //day and night duration
+const dayAndNightDuration = 65; //day and night duration
 const orbitDuration = dayAndNightDuration * 2;
 const speed = () => (2 * Math.PI) / orbitDuration; // Angular velocity
-const radius = 5000; //TODO: handle this to make it equivalent to ground width
+const radius = 10000;
 
 const cycleState = { day: "DAY", night: "NIGHT" };
 
@@ -23,6 +23,7 @@ export class DayNightCycle {
         this.onDayCallback = onDayCallback;
         this.onNightCallback = onNightCallback;
         this.dayAndNightDuration = dayAndNightDuration;
+        this.cycleCount = 0;
 
         this.timer = new Timer();
         this.timerInfo = {
@@ -109,6 +110,7 @@ export class DayNightCycle {
     #setDay() {
         if (this.cycleState === cycleState.day) return;
         this.cycleState = cycleState.day;
+        this.cycleCount++;
         this.onDayCallback();
     }
 

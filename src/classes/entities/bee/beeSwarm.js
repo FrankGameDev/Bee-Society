@@ -16,7 +16,7 @@ export default class BeeSwarm {
      * @param {GameManager} gameManager
      */
     constructor(
-        beeCount,
+        startingBeeAmount,
         beeInfo,
         farmingSpots,
         scene,
@@ -24,7 +24,7 @@ export default class BeeSwarm {
         sceneInitializer,
         gameManager
     ) {
-        this.beeCount = beeCount;
+        this.startingBeeAmount = startingBeeAmount;
         if (beeInfo == null) beeInfo = {};
 
         this.beeRadius = beeInfo.radius || 1;
@@ -35,6 +35,7 @@ export default class BeeSwarm {
             beeInfo.startPosition || new THREE.Vector3(0, 10, 0);
         this.beeModelEnabled = beeInfo.modelEnabled;
         this.bees = [];
+        this.getBeeCount = () => this.bees.length;
 
         this.farmingSpots = farmingSpots;
 
@@ -45,25 +46,9 @@ export default class BeeSwarm {
     }
 
     async instantiateFlock() {
-        for (let i = 0; i < this.beeCount; i++) {
-            const bee = new Bee(
-                {
-                    radius: this.beeRadius,
-                    position: this.beeStartPosition,
-                    color: this.beeColor,
-                    mass: this.beeMass,
-                    modelEnabled: this.beeModelEnabled,
-                    detectionRadius: this.beeDetectionRadius,
-                },
-                this.farmingSpots,
-                this.scene,
-                this.physicsWorld,
-                this.sceneInitializer,
-                this.gameManager
-            );
-            this.bees.push(bee);
+        for (let i = 0; i < this.startingBeeAmount; i++) {
+            this.addNewBee();
         }
-
         this.bees.forEach(async (bee) => await bee.instantiate());
     }
 
@@ -71,6 +56,27 @@ export default class BeeSwarm {
         this.bees.forEach((bee) => {
             bee.update(this.bees, target);
         });
+    }
+
+    async addNewBee(instantiate = false) {
+        const bee = new Bee(
+            {
+                radius: this.beeRadius,
+                position: this.beeStartPosition,
+                color: this.beeColor,
+                mass: this.beeMass,
+                modelEnabled: this.beeModelEnabled,
+                detectionRadius: this.beeDetectionRadius,
+            },
+            this.farmingSpots,
+            this.scene,
+            this.physicsWorld,
+            this.sceneInitializer,
+            this.gameManager
+        );
+        this.bees.push(bee);
+
+        if (instantiate) await bee.instantiate();
     }
 
     enableAll() {

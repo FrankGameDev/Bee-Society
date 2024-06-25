@@ -14,8 +14,12 @@ body {
 }
 
 .progress {
-    transition-duration: 1s;
+    transition-duration: 0.1s;
     transition-property: opacity, transform;
+}
+
+#cycle-timer {
+    background-color: rgba(0, 0, 0, 0) !important;
 }
 
 .hide {

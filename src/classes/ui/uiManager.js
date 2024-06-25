@@ -18,49 +18,34 @@ export class UiManager {
         );
 
         // Day/night cycle
-        this.dayProgress = document.getElementById("day-progress");
-        this.dayProgressBar = document.getElementById("day-progress-bar");
-        this.dayProgressBar.style.width = `${Math.floor(
+        this.cycleTimer = document.getElementById("cycle-timer");
+        this.cycleTimerBar = document.getElementById("cycle-timer-bar");
+        this.cycleTimerBar.style.width = `${Math.floor(
             this.gameManager.dayNightCycle.dayAndNightDuration
         )}%`;
-        this.dayProgressBar.ariaValueMax = Math.floor(
+        this.cycleTimerBar.ariaValueMax = Math.floor(
             this.gameManager.dayNightCycle.dayAndNightDuration
         );
-        this.dayProgressBar.ariaValueMin = 0;
-        this.dayProgressBar.ariaValueNow = Math.floor(
+        this.cycleTimerBar.ariaValueMin = 0;
+        this.cycleTimerBar.ariaValueNow = Math.floor(
             this.gameManager.dayNightCycle.dayAndNightDuration
         );
 
-        this.dayTimer = document.getElementById("day-time");
+        this.cycleTimer = document.getElementById("cycle-time");
         this.gameManager.dayNightCycle.timerInfo.registerListener(
             function (amount) {
-                this.dayTimer.textContent = Math.floor(amount).toString();
-                this.dayProgressBar.style.width = `${Math.floor(amount)}%`;
-                this.dayProgressBar.ariaValueNow = Math.floor(amount);
+                this.cycleTimer.textContent = Math.floor(amount).toString();
+                this.cycleTimerBar.style.width = `${Math.floor(amount)}%`;
+                this.cycleTimerBar.ariaValueNow = Math.floor(amount);
             }.bind(this)
         );
 
-        this.nightProgress = document.getElementById("night-progress");
-        this.nightProgressBar = document.getElementById("night-progress-bar");
-        this.nightProgressBar.style.width = `${Math.floor(
-            this.gameManager.dayNightCycle.dayAndNightDuration
-        )}%`;
-        this.nightProgressBar.ariaValueMax = Math.floor(
-            this.gameManager.dayNightCycle.dayAndNightDuration
-        );
-        this.nightProgressBar.ariaValueMin = 0;
-        this.nightProgressBar.ariaValueNow = Math.floor(
-            this.gameManager.dayNightCycle.dayAndNightDuration
-        );
-        this.nightTimer = document.getElementById("night-time");
-        this.gameManager.dayNightCycle.timerInfo.registerListener(
-            function (amount) {
-                this.nightTimer.textContent = Math.floor(amount).toString();
-                this.nightProgressBar.style.width = `${Math.floor(amount)}%`;
-                this.nightProgressBar.ariaValueNow = Math.floor(amount);
+        this.cycleCountLabel = document.getElementById("cycle-count-label");
+        this.gameManager.dayNightCycle.cycleCount.registerListener(
+            function (k) {
+                this.cycleCountLabel.textContent = `Cycle: ${k}`;
             }.bind(this)
         );
-
         // Buttons for upgrades =================
 
         // Bee upgrades
@@ -73,6 +58,9 @@ export class UiManager {
         );
 
         this.beeUpgradeMenu = document.getElementById("bee-upgrade-menu");
+
+        //Bee movement
+
         this.beeMovementUpgradeBtn = document.getElementById(
             "bee-movement-upgrade"
         );
@@ -80,20 +68,33 @@ export class UiManager {
             "click",
             this.#upgradeBeeMovement.bind(this)
         );
-        this.beeMovementUpgradeLabel =
+        this.beeMovementLevelLabel =
             document.getElementById("bee-movement-level");
+        this.beeMovementCostLabel =
+            document.getElementById("bee-movement-cost");
+        this.beeMovementLevelLabel.textContent = `Level: ${this.gameManager.beeMovementSpeedLevel}`;
+        this.beeMovementCostLabel.textContent = `Cost: ${this.gameManager.getUpgradeCostBasedOnLevel(
+            "bee.movement"
+        )}`;
 
-        this.beeHarvestUpgradeBtn = document.getElementById(
-            "bee-harvest-upgrade"
-        );
-        this.beeHarvestUpgradeBtn.addEventListener(
+        // Bee amount
+
+        this.beeAmountUpgradeBtn =
+            document.getElementById("bee-amount-upgrade");
+        this.beeAmountUpgradeBtn.addEventListener(
             "click",
-            this.#upgradeBeeHarvest.bind(this)
+            this.#upgradeBeeAmount.bind(this)
         );
-        this.beeMovementUpgradeLabel =
-            document.getElementById("bee-harvest-level");
+
+        this.beeAmountLevelLabel = document.getElementById("bee-amount-level");
+        this.beeAmountCostLabel = document.getElementById("bee-amount-cost");
+        this.beeAmountLevelLabel.textContent = `Bees amount: ${this.gameManager.beeAmount}`;
+        this.beeAmountCostLabel.textContent = `Cost: ${this.gameManager.getUpgradeCostBasedOnLevel(
+            "bee.amount"
+        )}`;
 
         // Defender upgrades
+
         this.defenderUpgradeButton = document.getElementById(
             "defender-upgrade-menu-button"
         );
@@ -124,19 +125,13 @@ export class UiManager {
 
     // Day Night cycle
     showDayTimer() {
-        this.dayProgressBar.classList.toggle("hide", false);
-        this.dayProgressBar.classList.toggle("show", true);
-
-        this.nightProgressBar.classList.toggle("show", false);
-        this.nightProgressBar.classList.toggle("hide", true);
+        this.cycleTimerBar.classList.toggle("bg-warning", true);
+        this.cycleTimerBar.classList.toggle("bg-black", false);
     }
 
     showNightTimer() {
-        this.nightProgressBar.classList.toggle("show", true);
-        this.nightProgressBar.classList.toggle("hide", false);
-
-        this.dayProgressBar.classList.toggle("hide", true);
-        this.dayProgressBar.classList.toggle("show", false);
+        this.cycleTimerBar.classList.toggle("bg-warning", false);
+        this.cycleTimerBar.classList.toggle("bg-black", true);
     }
 
     // UPGRADES  ===========
@@ -178,10 +173,18 @@ export class UiManager {
     }
     #upgradeBeeMovement() {
         this.gameManager.upgradeBeeMovementSpeed();
+        this.beeMovementLevelLabel.textContent = `Level: ${this.gameManager.beeMovementSpeedLevel}`;
+        this.beeMovementCostLabel.textContent = `Cost: ${this.gameManager.getUpgradeCostBasedOnLevel(
+            "bee.movement"
+        )}`;
     }
 
-    #upgradeBeeHarvest() {
-        this.gameManager.upgradeBeeHarvestingSpeed();
+    async #upgradeBeeAmount() {
+        await this.gameManager.upgradeBeeAmount();
+        this.beeAmountLevelLabel.textContent = `Bees amount: ${this.gameManager.beeAmount}`;
+        this.beeAmountCostLabel.textContent = `Cost: ${this.gameManager.getUpgradeCostBasedOnLevel(
+            "bee.amount"
+        )}`;
     }
 
     #openDefenderUpgradeMenu() {

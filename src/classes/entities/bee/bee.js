@@ -49,20 +49,6 @@ export default class Bee {
             startingMinSpeed * this.gameManager.getBeeMovementSpeedMultiplier();
         this.maxSpeed = () =>
             startingMaxSpeed * this.gameManager.getBeeMovementSpeedMultiplier();
-        this.harvestingSpeed = () => {
-            console.log(
-                `harvesting speed: ${
-                    startingHarvestingSpeed *
-                    this.gameManager.getBeeHarvestSpeedMultiplier() *
-                    1000
-                }`
-            );
-            return (
-                startingHarvestingSpeed *
-                this.gameManager.getBeeHarvestSpeedMultiplier() *
-                1000
-            );
-        };
 
         this.modelEnabled = options.modelEnabled;
         this.modelLoader = new GLTFCustomLoader();
@@ -117,14 +103,6 @@ export default class Bee {
         });
         this.beeMesh = new THREE.Mesh(geometry, material);
         if (this.beeModel) this.beeMesh.add(this.beeModel);
-        const axisSize = 20;
-        const axisHelper = new THREE.AxesHelper(axisSize);
-        axisHelper.setColors(
-            new THREE.Color("red"),
-            new THREE.Color("blue"),
-            new THREE.Color("green")
-        );
-        this.beeMesh.add(axisHelper);
 
         this.beeMesh.castShadow = shadowOptions.castShadow || false;
         this.beeMesh.receiveShadow = shadowOptions.receiveShadow || false;
@@ -214,7 +192,7 @@ export default class Bee {
         if (
             this.beeMesh.position.distanceTo(
                 this.nextHarvestingSpot.spotMesh.position
-            ) > 300
+            ) > 500
         ) {
             console.log("Reaching the target...");
             return;
@@ -233,7 +211,7 @@ export default class Bee {
                     console.log("Ending harvesting...");
                 }
             }.bind(this),
-            this.harvestingSpeed()
+            1000
         );
     }
 
@@ -376,10 +354,11 @@ export default class Bee {
         const wanderDistance = 500;
         const wanderJitter = 50;
 
+        // Get a random vector within a cube, which extends from 2.5 to -2.5
         const randomVector = new THREE.Vector3(
-            (Math.random() - 0.5) * 2,
-            (Math.random() - 0.5) * 2,
-            (Math.random() - 0.5) * 2
+            (Math.random() - 0.5) * 5,
+            (Math.random() - 0.5) * 5,
+            (Math.random() - 0.5) * 5
         )
             .normalize()
             .multiplyScalar(wanderJitter);

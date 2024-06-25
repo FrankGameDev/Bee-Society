@@ -23,7 +23,20 @@ export class DayNightCycle {
         this.onDayCallback = onDayCallback;
         this.onNightCallback = onNightCallback;
         this.dayAndNightDuration = dayAndNightDuration;
-        this.cycleCount = 0;
+        this.cycleCount = {
+            _value: 0,
+            listeners: [],
+            get value() {
+                return this._value;
+            },
+            set value(k) {
+                this._value = k;
+                this.listeners.forEach((listener) => listener(k));
+            },
+            registerListener: function (listener) {
+                this.listeners.push(listener);
+            },
+        };
 
         this.timer = new Timer();
         this.timerInfo = {
@@ -110,7 +123,7 @@ export class DayNightCycle {
     #setDay() {
         if (this.cycleState === cycleState.day) return;
         this.cycleState = cycleState.day;
-        this.cycleCount++;
+        this.cycleCount.value += 1;
         this.onDayCallback();
     }
 

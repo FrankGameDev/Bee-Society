@@ -24,21 +24,16 @@
                 <div
                     id="cycle"
                     class="cycle position-absolute top-0 start-0 mt-3 mx-lg-2 w-25 h-100">
-                    <div id="day-progress" class="progress show">
+                    <div id="cycle-timer" class="progress">
                         <div
-                            id="day-progress-bar"
+                            id="cycle-timer-bar"
                             class="progress-bar bg-warning progress-bar-animated progress-bar-striped"
                             role="progressbar">
-                            <p id="day-time" class="my-auto mx-auto"></p>
+                            <p id="cycle-time" class="my-auto mx-auto"></p>
                         </div>
                     </div>
-                    <div id="night-progress" class="progress hide">
-                        <div
-                            id="night-progress-bar"
-                            class="progress-bar bg-black progress-bar-animated progress-bar-striped"
-                            role="progressbar">
-                            <p id="night-time" class="my-auto mx-auto"></p>
-                        </div>
+                    <div id="cycle-count">
+                        <p id="cycle-count-label">Cycle: 1</p>
                     </div>
                 </div>
 
@@ -85,18 +80,20 @@
                                 <span id="bee-movement-level">
                                     Current level = 1
                                 </span>
+                                <span id="bee-movement-cost"> Cost: 10 </span>
                             </div>
                             <div
                                 class="upgrade-button"
-                                id="bee-harvest-upgrade-container">
+                                id="bee-amount-upgrade-container">
                                 <button
-                                    id="bee-harvest-upgrade"
+                                    id="bee-amount-upgrade"
                                     class="btn btn-lg btn-secondary">
                                     Amount
                                 </button>
-                                <span id="bee-harvest-level">
+                                <span id="bee-amount-level">
                                     Current level = 1
                                 </span>
+                                <span id="bee-amount-cost"> Cost: 10 </span>
                             </div>
                         </div>
                     </div>

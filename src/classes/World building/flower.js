@@ -38,6 +38,7 @@ export class Flower {
             const spotClickableGeometry = new THREE.BoxGeometry(15, 10, 15);
             const spotClickableMaterial = new THREE.MeshBasicMaterial({
                 wireframe: true,
+                opacity: 0,
             });
             this.spotMesh = new THREE.Mesh(
                 spotClickableGeometry,

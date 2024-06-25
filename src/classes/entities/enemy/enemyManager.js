@@ -6,41 +6,39 @@ export class EnemyManager {
     /**
      *
      * @param {number} enemyAmount
-     * @param {{position: THREE.Vector3}} enemyOptions
-     * @param {[]} farmingSpots
-     * @param {[]} defenderBees
      * @param {{dimension: THREE.Vector2}} levelInfo
      */
-    constructor(
-        enemyAmount,
-        enemyOptions,
-        farmingSpots,
-        defendingBees,
-        levelInfo
-    ) {
+    constructor(enemyAmount, scene, physicsWorld, levelInfo) {
         this.enemyAmount = enemyAmount;
-        this.enemyOptions = enemyOptions;
-        this.farmingSpots = farmingSpots;
-        this.defendingBees = defendingBees;
+        this.scene = scene;
+        this.physicsWorld = physicsWorld;
         this.levelInfo = levelInfo;
 
         this.enemiesReference = [];
     }
 
-    async instantiateEnemies(scene, physicsWorld) {
+    async instantiateEnemies(farmingSpots, defenderBeesReference) {
+        this.farmingSpots = farmingSpots;
+        this.defenderBeesReference = defenderBeesReference;
         for (let i = 0; i < this.enemyAmount; i++) {
             let enemy = new Enemy(
                 { position: this.#getRandomSpawnPosition() },
-                scene,
-                physicsWorld,
+                this.scene,
+                this.physicsWorld,
                 this.#removeReference.bind(this),
                 this.farmingSpots,
-                this.defendingBees
+                this.defenderBeesReference
             );
             await enemy.instantiate();
             enemy.isEnabled = true;
             this.enemiesReference.push(enemy);
         }
+    }
+
+    async setDefendersReference(defenderBeesReference) {
+        this.enemiesReference.forEach(
+            (enemy) => (enemy.defendingBees = defenderBeesReference)
+        );
     }
 
     updateEnemies() {
@@ -57,7 +55,6 @@ export class EnemyManager {
         this.enemiesReference = this.enemiesReference.filter(
             (e) => e !== enemy
         );
-        console.log(`Enemy ${enemy.id} removed from manager.`);
     }
 
     #getRandomSpawnPosition() {

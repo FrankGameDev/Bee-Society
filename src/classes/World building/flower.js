@@ -16,6 +16,7 @@ export class Flower {
         this.flowerLabel = undefined;
         this.currentPollenLevel = maxPollen;
         this.isEnabled = true;
+        this.wasAttacked = false;
     }
 
     async #loadModels() {
@@ -98,12 +99,21 @@ export class Flower {
     }
 
     resetPollen() {
-        this.currentPollenLevel = maxPollen;
+        if (this.wasAttacked) {
+            this.currentPollenLevel = Math.floor(maxPollen / 3);
+            this.wasAttacked = false;
+        } else this.currentPollenLevel = maxPollen;
         this.isEnabled = true;
+
+        this.flowerPollenLvl.ariaValueNow = this.currentPollenLevel;
+        this.flowerPollenLvl.style.width = `${
+            (this.currentPollenLevel * 100) / 10
+        }%`;
+        this.flowerPollenProgressBar.classList.toggle("hide", false);
     }
 
     #disableFarmingSpot() {
         this.isEnabled = false;
-        this.flowerPollenProgressBar.classList.add("hide");
+        this.flowerPollenProgressBar.classList.toggle("hide", true);
     }
 }

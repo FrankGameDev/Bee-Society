@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Timer } from "three/addons/misc/Timer.js";
 
-const dayAndNightDuration = 65; //day and night duration
+const dayAndNightDuration = 20; //day and night duration
 const orbitDuration = dayAndNightDuration * 2;
 const speed = () => (2 * Math.PI) / orbitDuration; // Angular velocity
 const radius = 5000; //TODO: handle this to make it equivalent to ground width

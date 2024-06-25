@@ -45,11 +45,11 @@ export class UiManager {
         this.nightProgressBar.style.width = `${Math.floor(
             this.gameManager.dayNightCycle.dayAndNightDuration
         )}%`;
-        this.dayProgressBar.ariaValueMax = Math.floor(
+        this.nightProgressBar.ariaValueMax = Math.floor(
             this.gameManager.dayNightCycle.dayAndNightDuration
         );
-        this.dayProgressBar.ariaValueMin = 0;
-        this.dayProgressBar.ariaValueNow = Math.floor(
+        this.nightProgressBar.ariaValueMin = 0;
+        this.nightProgressBar.ariaValueNow = Math.floor(
             this.gameManager.dayNightCycle.dayAndNightDuration
         );
         this.nightTimer = document.getElementById("night-time");

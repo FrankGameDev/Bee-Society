@@ -25,13 +25,20 @@ export default class Bee {
      * @param {Array} farmingSpots
      * @param {GameManager} gameManager
      */
-    constructor(options, farmingSpots, sceneInitializer, gameManager) {
+    constructor(
+        options,
+        farmingSpots,
+        scene,
+        physicsWorld,
+        sceneInitializer,
+        gameManager
+    ) {
         if (!options) console.error("Bee options not available");
         if (!gameManager) console.error("Game manager not available");
         this.gameManager = gameManager;
 
         this.radius = options.radius;
-        this.position = options.position;
+        this.startPosition = options.position;
         this.color = options.color;
         this.mass = options.mass;
         this.detectionRadius =
@@ -69,7 +76,8 @@ export default class Bee {
         this.beeMesh = undefined;
         this.beeBody = undefined;
 
-        this.scene = null;
+        this.scene = scene;
+        this.physicsWorld = physicsWorld;
         this.sceneInitializer = sceneInitializer;
         this.nextHarvestingSpot = undefined;
     }
@@ -82,9 +90,9 @@ export default class Bee {
             shape: new CANNON.Sphere(this.radius),
         });
         this.beeBody.position.set(
-            this.position.x,
-            this.position.y,
-            this.position.z
+            this.startPosition.x,
+            this.startPosition.y,
+            this.startPosition.z
         );
     }
 
@@ -119,16 +127,14 @@ export default class Bee {
         this.beeMesh.receiveShadow = shadowOptions.receiveShadow || false;
     }
 
-    async instantiate(scene, physicsWorld) {
+    async instantiate() {
         await this.#createRenderer();
         await this.#createBody();
 
-        scene.add(this.beeMesh);
-        scene.add(this.beeModel);
-        physicsWorld.addBody(this.beeBody);
+        this.scene.add(this.beeMesh);
+        this.scene.add(this.beeModel);
+        this.physicsWorld.addBody(this.beeBody);
         this.#bindMeshBody();
-
-        this.scene = scene;
 
         addEventListener("click", this.#onMouseClick.bind(this), false);
     }
@@ -161,6 +167,22 @@ export default class Bee {
         if (this.nextHarvestingSpot) {
             this.#harvestPollen();
         }
+    }
+
+    enable(position = this.startPosition) {
+        if (!this.beeMesh || !this.beeModel || !this.beeBody) return;
+
+        this.scene.add(this.beeMesh);
+        this.scene.add(this.beeModel);
+        this.physicsWorld.addBody(this.beeBody);
+
+        this.beeBody.position.copy(position);
+    }
+
+    disable() {
+        this.scene.remove(this.beeMesh);
+        this.scene.remove(this.beeModel);
+        this.physicsWorld.removeBody(this.beeBody);
     }
 
     // JS EVENTS =================================================

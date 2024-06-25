@@ -3,7 +3,7 @@ import * as CANNON from "cannon-es";
 import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 
 const minSpeed = 100;
-const maxSpeed = 250;
+const maxSpeed = 500;
 const damage = 1;
 let damageMultiplier = 1; // Multiplier slightly increasing each cycle // TODO bind with cycle logic
 
@@ -132,7 +132,7 @@ export class Enemy {
     }
 
     die() {
-        //TODO: remove this enemy from the active enemies vector
+        this.#resetState();
         this.scene.remove(this.enemyMesh);
         this.scene.remove(this.enemyModel);
         if (this.enemyMesh.geometry) {
@@ -272,7 +272,7 @@ export class Enemy {
                 this.enemyMesh.position
             );
             if (distance < minDistance) {
-                nearest = spot;
+                nearest = bee;
                 minDistance = distance;
             }
         });
@@ -324,12 +324,13 @@ export class Enemy {
         }
         this.isStealing = true;
         this.nextFarm = nextFarm;
-        const harvestingRoutine = setInterval(
+        this.harvestingRoutine = setInterval(
             function () {
                 this.nextFarm.harvestPollen();
                 console.log("Enemy stealing pollen...");
                 //TODO Update UI
                 if (this.nextFarm.currentPollenLevel <= 0) {
+                    this.nextFarm.wasAttacked = true;
                     this.nextFarm = null;
                     this.isStealing = false;
                     console.log("Ending stealing pollen...");

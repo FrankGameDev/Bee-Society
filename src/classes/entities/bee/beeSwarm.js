@@ -56,20 +56,28 @@ export default class BeeSwarm {
                     detectionRadius: this.beeDetectionRadius,
                 },
                 this.farmingSpots,
+                this.scene,
+                this.physicsWorld,
                 this.sceneInitializer,
                 this.gameManager
             );
             this.bees.push(bee);
         }
 
-        this.bees.forEach(async (bee) => {
-            await bee.instantiate(this.scene, this.physicsWorld);
-        });
+        this.bees.forEach(async (bee) => await bee.instantiate());
     }
 
     update(target = new THREE.Vector3()) {
         this.bees.forEach((bee) => {
             bee.update(this.bees, target);
         });
+    }
+
+    enableAll() {
+        this.bees.forEach((bee) => bee.enable());
+    }
+
+    disableAll() {
+        this.bees.forEach((bee) => bee.disable());
     }
 }

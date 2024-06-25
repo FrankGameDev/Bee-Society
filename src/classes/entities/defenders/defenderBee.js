@@ -2,8 +2,8 @@ import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 
-const minSpeed = 100;
-const maxSpeed = 250;
+const minSpeed = 1500;
+const maxSpeed = 2000;
 
 const beeModelPath = "/bee_2/scene.gltf";
 
@@ -12,11 +12,13 @@ export default class DefenderBee {
      *
      * @param {{radius: number, position: THREE.Vector3, mass: number, detectionRadius: number, color: THREE.Color, modelEnabled: boolean}} options
      * @param {Array} enemies
+     * @param {{onDeathCallback: event, onEnemyKillCallback: event}} callbacks
+     * @param {event} onDeathCallback
      */
-    constructor(options, enemies) {
+    constructor(options, enemies, scene, physicsWorld, callbacks) {
         if (!options) console.error("Bee options not available");
         this.radius = options.radius;
-        this.position = options.position;
+        this.startPosition = options.position;
         this.color = options.color;
         this.mass = options.mass;
         this.detectionRadius =
@@ -34,10 +36,13 @@ export default class DefenderBee {
         this.beeMesh = undefined;
         this.beeBody = undefined;
 
-        this.scene = null;
-        this.sceneInitializer = sceneInitializer;
+        this.scene = scene;
+        this.physicsWorld = physicsWorld;
         this.enemies = enemies;
         this.nearestEnemy = undefined;
+
+        this.onDeathCallback = callbacks.onDeathCallback;
+        this.onEnemyKillCallback = callbacks.onEnemyKillCallback;
 
         this.hp = 10;
     }
@@ -50,9 +55,9 @@ export default class DefenderBee {
             shape: new CANNON.Sphere(this.radius),
         });
         this.beeBody.position.set(
-            this.position.x,
-            this.position.y,
-            this.position.z
+            this.startPosition.x,
+            this.startPosition.y,
+            this.startPosition.z
         );
     }
 
@@ -86,16 +91,14 @@ export default class DefenderBee {
         this.beeMesh.receiveShadow = shadowOptions.receiveShadow || false;
     }
 
-    async instantiate(scene, physicsWorld) {
+    async instantiate() {
         await this.#createRenderer();
         await this.#createBody();
 
-        scene.add(this.beeMesh);
-        scene.add(this.beeModel);
-        physicsWorld.addBody(this.beeBody);
+        this.scene.add(this.beeMesh);
+        this.scene.add(this.beeModel);
+        this.physicsWorld.addBody(this.beeBody);
         this.#bindMeshBody();
-
-        this.scene = scene;
     }
 
     // UPDATE LOGIC =================================================
@@ -113,35 +116,67 @@ export default class DefenderBee {
     //TODO: Add turn velocity and wander logic
     update() {
         //Locomotion
-        const nearestEnemy = this.#reachNearestEnemy();
+        this.nearestEnemy = this.#reachNearestEnemy();
 
-        if (nearestEnemy.enemyMesh.distanceTo(this.beeMesh.position) < 10) {
+        if (
+            this.nearestEnemy &&
+            this.nearestEnemy.enemyMesh.position.distanceTo(
+                this.beeMesh.position
+            ) < 100
+        ) {
             // Can attack
             this.#attackEnemy();
         }
         this.#bindMeshBody();
     }
 
-    #reachNearestEnemy() {
-        function getNearestEnemy() {
-            let nearest = enemies[0];
-            let minDistance = enemies[0].enemyMesh.position.distanceTo(
-                this.beeMesh.position
-            );
-            this.enemies.forEach((enemy) => {
-                const distance = enemy.enemyMesh.position.distanceTo(
-                    this.beeMesh.position
-                );
-                if (distance < minDistance) {
-                    nearest = enemy;
-                    minDistance = distance;
-                }
-            });
+    takeDamage(amount = 1) {
+        this.hp -= amount;
+        if (this.hp <= 0) this.die();
+    }
 
-            return nearest;
+    die() {
+        this.scene.remove(this.beeMesh);
+        this.scene.remove(this.beeModel);
+        if (this.beeMesh.geometry) {
+            this.beeMesh.geometry.dispose();
         }
 
-        this.nearestEnemy = getNearestEnemy();
+        if (this.beeMesh.material) {
+            this.beeMesh.material.dispose();
+        }
+        this.beeMesh = undefined;
+
+        this.beeBody.world.removeBody(this.beeBody);
+        this.beeBody = undefined;
+
+        this.onDeathCallback(this);
+    }
+
+    #getNearestEnemy() {
+        if (this.enemies.length === 0) return null;
+
+        let nearest = this.enemies[0];
+        let minDistance = this.enemies[0].enemyMesh.position.distanceTo(
+            this.beeMesh.position
+        );
+        this.enemies.forEach((enemy) => {
+            const distance = enemy.enemyMesh.position.distanceTo(
+                this.beeMesh.position
+            );
+            if (distance < minDistance) {
+                nearest = enemy;
+                minDistance = distance;
+            }
+        });
+
+        return nearest;
+    }
+    #reachNearestEnemy() {
+        this.nextTarget = new THREE.Vector3();
+        this.nearestEnemy = this.#getNearestEnemy();
+        if (!this.nearestEnemy) this.nextTarget.copy(this.startPosition);
+        else this.nextTarget.copy(this.nearestEnemy.enemyMesh.position);
 
         let acceleration = new THREE.Vector3(
             this.beeBody.velocity.x,
@@ -149,7 +184,7 @@ export default class DefenderBee {
             this.beeBody.velocity.z
         );
         const targetVelocity = new THREE.Vector3()
-            .subVectors(nearestEnemy.enemyMesh.position, this.beeBody.position)
+            .subVectors(this.nextTarget, this.beeBody.position)
             .normalize()
             .multiplyScalar(minSpeed);
 
@@ -159,14 +194,18 @@ export default class DefenderBee {
         }
         this.beeBody.velocity.copy(acceleration);
 
-        return nearestEnemy;
+        return this.nearestEnemy;
     }
 
     #attackEnemy() {
         if (!this.nearestEnemy) {
             console.log("No enemy near me");
         }
-
         //TODO implement attack logic
+        this.nearestEnemy.takeDamage(1);
+        if (this.nearestEnemy.hp <= 0) {
+            this.onEnemyKillCallback(this.nearestEnemy);
+            this.nearestEnemy = null;
+        }
     }
 }

@@ -1,8 +1,11 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { Flower } from "./flower";
+import { GLTFCustomLoader } from "../../utils/gltfCustomLoader";
 
 const planeDimension = { x: 10000, y: 10000 };
+
+const hiveModelPath = "/honeycomb_material/scene.gltf";
 
 export class Farm {
     constructor(scene, physicsWorld) {
@@ -33,14 +36,17 @@ export class Farm {
             "resources/textures/grass/Grass001_1K-JPG_Displacement.jpg"
         );
 
-        this.sky = this.textureLoader.load("resources/jpg/blueSky.jpg");
+        this.modelLoader = new GLTFCustomLoader();
+        this.modelsToLoad = {
+            hive: hiveModelPath,
+        };
 
-        // this.scene.background = this.sky;
+        this.hiveModel = undefined;
     }
 
     async createFarm(farmingSpotCount = 10) {
         this.#defineGround();
-        this.#generateHive();
+        await this.#generateHive();
         await this.#generateFarmingSpot(farmingSpotCount);
     }
 
@@ -50,13 +56,14 @@ export class Farm {
             planeDimension.x,
             planeDimension.y
         );
-        let groundMat = new THREE.MeshPhongMaterial({
+        let groundMat = new THREE.MeshLambertMaterial({
             map: this.grassTexture,
             normalMap: this.grassNormalMap,
             displacementMap: this.grassDisplacement,
+            side: THREE.DoubleSide,
         });
         this.groundMesh = new THREE.Mesh(groundGeo, groundMat);
-        this.groundMesh.receiveShadow = true;
+
         // Physics
         let groundBody = new CANNON.Body({
             type: CANNON.Body.STATIC,
@@ -65,17 +72,36 @@ export class Farm {
         groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
         this.physicsWorld.addBody(groundBody);
         this.scene.add(this.groundMesh);
-
+        this.groundMesh.receiveShadow = true;
         this.groundMesh.position.copy(groundBody.position);
         this.groundMesh.quaternion.copy(groundBody.quaternion);
     }
 
-    #generateHive() {
+    async #generateHive() {
+        if (!this.hiveModel) {
+            const model = await this.modelLoader.loadGLTFModel(
+                this.modelsToLoad.hive
+            );
+            this.hiveModel = model.scene.children[0].clone();
+            this.hiveModel.scale.multiplyScalar(10);
+            this.hiveModel.traverse(function (child) {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    child.material = new THREE.MeshStandardMaterial({
+                        map: child.material.map,
+                    });
+                }
+            });
+        }
+
         let hive = new THREE.SphereGeometry(200);
         let hiveMat = new THREE.MeshPhongMaterial({
-            color: new THREE.Color("yellow"),
+            transparent: true,
+            opacity: 0,
         });
         this.hiveMesh = new THREE.Mesh(hive, hiveMat);
+        this.hiveMesh.add(this.hiveModel);
         this.scene.add(this.hiveMesh);
 
         this.hiveBody = new CANNON.Body({
@@ -84,9 +110,9 @@ export class Farm {
         });
         this.physicsWorld.addBody(this.hiveBody);
 
-        this.hiveMesh.position.set(0, 350, 0);
-        this.hiveMesh.castShadow = true;
-        this.hiveMesh.receiveShadow = true;
+        this.hiveMesh.position.set(0, 300, 0);
+        // this.hiveMesh.castShadow = true;
+        // this.hiveMesh.receiveShadow = true;
         this.hiveBody.position.copy(this.hiveMesh.position);
     }
 

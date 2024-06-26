@@ -17,8 +17,10 @@
     },
     "homepage": "https://github.com/FrankGameDev/InteractiveGraphicsFinalProject#readme",
     "dependencies": {
+        "vite": "5.2.1",
         "bootstrap": "^5.3.3",
         "cannon-es": "0.20.0",
+        "dat.gui": "^0.7.9",
         "three": "0.165.0"
     },
     "devDependencies": {

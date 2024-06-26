@@ -1,6 +1,7 @@
 import { GameManager } from "../../gameManager";
 import Bee from "./bee";
 import * as THREE from "three";
+import { GUI } from "dat.gui";
 
 /**
  * Handles a bee's swarm
@@ -14,6 +15,7 @@ export default class BeeSwarm {
      * @param {THREE.Scene} scene
      * @param {CANNON.World} physicsWorld
      * @param {GameManager} gameManager
+     * @param {GUI} gui
      */
     constructor(
         startingBeeAmount,
@@ -22,7 +24,8 @@ export default class BeeSwarm {
         scene,
         physicsWorld,
         sceneInitializer,
-        gameManager
+        gameManager,
+        gui
     ) {
         this.startingBeeAmount = startingBeeAmount;
         if (beeInfo == null) beeInfo = {};
@@ -43,6 +46,25 @@ export default class BeeSwarm {
         this.physicsWorld = physicsWorld;
         this.sceneInitializer = sceneInitializer;
         this.gameManager = gameManager;
+
+        this.boidsAlgoProperties = {
+            cohesionWeight: 0.3,
+            separationWeight: 500,
+            alignmentWeight: 0.1,
+            wanderWeight: 5,
+        };
+        const boidFolder = gui.addFolder("Bee");
+        boidFolder.add(this.boidsAlgoProperties, "cohesionWeight", 0, 10);
+        boidFolder.add(
+            this.boidsAlgoProperties,
+            "separationWeight",
+            0,
+            1000,
+            5
+        );
+        boidFolder.add(this.boidsAlgoProperties, "alignmentWeight", 0, 2);
+        boidFolder.add(this.boidsAlgoProperties, "wanderWeight", 0, 10);
+        boidFolder.open();
     }
 
     async instantiateFlock() {
@@ -65,7 +87,7 @@ export default class BeeSwarm {
 
     update(target = new THREE.Vector3()) {
         this.bees.forEach((bee) => {
-            bee.update(this.bees, target);
+            bee.update(this.boidsAlgoProperties, this.bees, target);
         });
     }
 

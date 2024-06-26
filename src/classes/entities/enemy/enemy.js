@@ -84,11 +84,7 @@ export class Enemy {
         );
     }
 
-    /**
-     *
-     * @param {*} shadowOptions -> Defines all the shadow options of the enemy object
-     */
-    async #createRenderer(shadowOptions = {}) {
+    async #createRenderer() {
         if (!this.enemyModel) {
             const model = await this.modelLoader.loadGLTFModel(
                 this.modelsToLoad.enemy
@@ -96,18 +92,25 @@ export class Enemy {
             this.enemyModel = model.scene.children[0].clone();
             this.enemyModel.scale.multiplyScalar(10);
             this.enemyModel.rotation.z = Math.PI / 2; //Rotates the model in order to face the right target
+            this.enemyModel.traverse(function (child) {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    child.material = new THREE.MeshStandardMaterial({
+                        map: child.material.map,
+                    });
+                }
+            });
         }
 
         //If there is an error during loading the model
         const geometry = new THREE.SphereGeometry(this.radius);
         const material = new THREE.MeshBasicMaterial({
-            wireframe: true,
-            color: new THREE.Color("red"),
+            transparent: true,
+            opacity: 0,
         });
         this.enemyMesh = new THREE.Mesh(geometry, material);
         if (this.enemyModel) this.enemyMesh.add(this.enemyModel);
-        this.enemyMesh.castShadow = shadowOptions.castShadow || false;
-        this.enemyMesh.receiveShadow = shadowOptions.receiveShadow || false;
     }
 
     async instantiate() {
@@ -116,7 +119,7 @@ export class Enemy {
 
         this.scene.add(this.enemyMesh);
         this.physicsWorld.addBody(this.enemyBody);
-        this.#bindMeshBody();
+        this.#bindMeshBody(this.position);
     }
 
     // DAMAGING
@@ -145,9 +148,9 @@ export class Enemy {
 
     // UPDATE LOGIC =================================================================
 
-    #bindMeshBody() {
+    #bindMeshBody(lookAtTarget) {
         this.enemyMesh.position.copy(this.enemyBody.position);
-        this.enemyMesh.quaternion.copy(this.enemyBody.quaternion);
+        this.enemyMesh.lookAt(lookAtTarget);
     }
 
     update() {
@@ -156,7 +159,6 @@ export class Enemy {
             3. If defending bot, attack and apply 1 damage per second.
             2. If farming spot, drain the pollen and disable it for 1 cycle
         */
-        this.#bindMeshBody();
 
         if (!this.isEnabled) return;
 
@@ -185,6 +187,7 @@ export class Enemy {
         } else console.warn("No defender and farm found");
 
         this.#moveTowardsTarget(this.nextTargetPosition);
+        this.#bindMeshBody(this.nextTargetPosition);
     }
 
     /**
@@ -325,7 +328,7 @@ export class Enemy {
                     this.harvestingRoutine = null;
                 }
             }.bind(this),
-            1000
+            500
         );
     }
 

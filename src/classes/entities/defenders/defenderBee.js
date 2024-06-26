@@ -15,7 +15,7 @@ const cohesionRange = 50;
 const alignmentRange = 50;
 const obstacleRange = 50;
 
-const beeModelPath = "/bee_low_poly/scene.gltf";
+const beeModelPath = "/ps1_bee/scene.gltf";
 
 export default class DefenderBee {
     /**
@@ -76,31 +76,32 @@ export default class DefenderBee {
         );
     }
 
-    /**
-     *
-     * @param {*} shadowOptions -> Defines all the shadow options of the boid
-     */
-    async #createRenderer(shadowOptions = {}) {
+    async #createRenderer() {
         if (this.modelEnabled && !this.beeModel) {
             const model = await this.modelLoader.loadGLTFModel(
                 this.modelsToLoad.bee
             );
             this.beeModel = model.scene.children[0].clone();
-            this.beeModel.scale.multiplyScalar(5);
+            this.beeModel.scale.multiplyScalar(15);
             this.beeModel.rotation.z = Math.PI / 2;
+            this.beeModel.traverse(function (child) {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    child.material = new THREE.MeshStandardMaterial({
+                        map: child.material.map,
+                    });
+                }
+            });
         }
 
         const geometry = new THREE.SphereGeometry(this.radius);
         const material = new THREE.MeshBasicMaterial({
-            wireframe: true,
-            color: new THREE.Color("green"),
-            // opacity: 0,
+            transparent: true,
+            opacity: 0,
         });
         this.beeMesh = new THREE.Mesh(geometry, material);
         if (this.beeModel) this.beeMesh.add(this.beeModel);
-
-        this.beeMesh.castShadow = shadowOptions.castShadow || false;
-        this.beeMesh.receiveShadow = shadowOptions.receiveShadow || false;
     }
 
     async instantiate() {
@@ -119,9 +120,9 @@ export default class DefenderBee {
         this.beeMesh.lookAt(lookAtTarget);
     }
 
-    update(neighbors) {
+    update(boidAlgoProperties, neighbors) {
         this.nearestEnemy = this.#getNearestEnemy();
-
+        this.boidAlgoProperties = boidAlgoProperties;
         //Locomotion
         this.nextTarget = this.#goToTheNextTarget(this.nearestEnemy, neighbors);
 
@@ -249,13 +250,18 @@ export default class DefenderBee {
             .normalize()
             .multiplyScalar(this.minSpeed());
 
-        const separationVelocity =
-            this.#separation(neighbors).multiplyScalar(separationWeight);
-        const alignmentVelocity =
-            this.#alignment(neighbors).multiplyScalar(alignmentWeight);
-        const cohesionVelocity =
-            this.#cohesion(neighbors).multiplyScalar(cohesionWeight);
-        const wanderVelocity = this.#wander().multiplyScalar(wanderWeight);
+        const separationVelocity = this.#separation(neighbors).multiplyScalar(
+            this.boidAlgoProperties.separationWeight
+        );
+        const alignmentVelocity = this.#alignment(neighbors).multiplyScalar(
+            this.boidAlgoProperties.alignmentWeight
+        );
+        const cohesionVelocity = this.#cohesion(neighbors).multiplyScalar(
+            this.boidAlgoProperties.cohesionWeight
+        );
+        const wanderVelocity = this.#wander().multiplyScalar(
+            this.boidAlgoProperties.wanderWeight
+        );
 
         acceleration.add(separationVelocity);
         acceleration.add(alignmentVelocity);

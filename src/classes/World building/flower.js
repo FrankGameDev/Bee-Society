@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFCustomLoader } from "../../utils/gltfCustomLoader";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
 
-const flowerGLTF = "/low_poly_flower/scene.gltf";
+const flowerGLTF = "/flowers/scene.gltf";
 const maxPollen = 10;
 
 export class Flower {
@@ -31,18 +31,27 @@ export class Flower {
         await this.#loadModels().then(() => {
             let flower = this.models.flower.scene.children[0].clone();
             flower.position.copy(position);
-            flower.scale.set(25, 25, 25);
+            flower.scale.multiplyScalar(50);
+            flower.traverse(function (child) {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    child.material = new THREE.MeshStandardMaterial({
+                        map: child.material.map,
+                    });
+                }
+            });
             scene.add(flower);
 
             // Spawn a mesh to enable the onClick event intersection
             const spotClickableGeometry = new THREE.BoxGeometry(
-                flower.scale.x / 5,
-                flower.scale.y / 5,
-                flower.scale.z / 5
+                flower.scale.x / 25,
+                flower.scale.y / 25,
+                flower.scale.z / 25
             );
             const spotClickableMaterial = new THREE.MeshBasicMaterial({
                 transparent: true,
-                opacity: 0.25,
+                opacity: 0,
             });
             this.spotMesh = new THREE.Mesh(
                 spotClickableGeometry,
@@ -50,10 +59,12 @@ export class Flower {
             );
             this.spotMesh.position.set(
                 flower.position.x,
-                flower.position.y + flower.scale.y * 2,
+                flower.position.y + flower.scale.y,
                 flower.position.z
             );
             this.spotMesh.scale.copy(flower.scale);
+            flower.castShadow = true;
+            flower.receiveShadow = true;
             scene.add(this.spotMesh);
             this.spotMesh.instance = this;
 
@@ -90,7 +101,7 @@ export class Flower {
      * @returns
      */
     harvestPollen() {
-        this.currentPollenLevel -= 1;
+        this.currentPollenLevel -= 0.25;
 
         this.flowerPollenLvl.ariaValueNow = this.currentPollenLevel;
         this.flowerPollenLvl.style.width = `${
@@ -100,7 +111,7 @@ export class Flower {
         if (this.currentPollenLevel <= 0) {
             this.#disableFarmingSpot();
         }
-        return this.currentPollenLevel >= 0 ? 1 : 0;
+        return this.currentPollenLevel >= 0 ? 0.25 : 0;
     }
 
     resetPollen() {

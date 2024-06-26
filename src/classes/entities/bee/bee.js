@@ -6,17 +6,17 @@ const startingMinSpeed = 100;
 const startingMaxSpeed = 250;
 const startingHarvestingSpeed = 1; //seconds
 
-const cohesionWeight = 0.3;
-const separationWeight = 500;
-const alignmentWeight = 0.1;
-const wanderWeight = 5;
+let cohesionWeight = 0.3;
+let separationWeight = 500;
+let alignmentWeight = 0.1;
+let wanderWeight = 5;
 
 const separationRange = 50;
 const cohesionRange = 50;
 const alignmentRange = 50;
 const obstacleRange = 50;
 
-const beeModelPath = "/bee_low_poly/scene.gltf";
+const beeModelPath = "/ps1_bee/scene.gltf";
 
 export default class Bee {
     /**
@@ -63,6 +63,7 @@ export default class Bee {
         this.physicsWorld = physicsWorld;
         this.sceneInitializer = sceneInitializer;
         this.nextHarvestingSpot = undefined;
+        this.boidAlgoProperties = {};
     }
 
     // INITIALIZATION =================================================================
@@ -79,30 +80,33 @@ export default class Bee {
         );
     }
 
-    /**
-     *
-     * @param {*} shadowOptions -> Defines all the shadow options of the boid
-     */
-    async #createRenderer(shadowOptions = {}) {
+    async #createRenderer() {
         if (this.modelEnabled && !this.beeModel) {
             const model = await this.modelLoader.loadGLTFModel(
                 this.modelsToLoad.bee
             );
             this.beeModel = model.scene.children[0].clone();
-            this.beeModel.scale.multiplyScalar(5);
+            this.beeModel.scale.multiplyScalar(15);
+            this.beeModel.position.y -= 20;
             this.beeModel.rotation.z = Math.PI / 2; //Rotates the model in order to face the right target
+            this.beeModel.traverse(function (child) {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    child.material = new THREE.MeshStandardMaterial({
+                        map: child.material.map,
+                    });
+                }
+            });
         }
 
         const geometry = new THREE.SphereGeometry(this.radius);
         const material = new THREE.MeshBasicMaterial({
             transparent: true,
-            opacity: 0,
+            opacity: false,
         });
         this.beeMesh = new THREE.Mesh(geometry, material);
         if (this.beeModel) this.beeMesh.add(this.beeModel);
-
-        this.beeMesh.castShadow = shadowOptions.castShadow || false;
-        this.beeMesh.receiveShadow = shadowOptions.receiveShadow || false;
     }
 
     async instantiate() {
@@ -123,11 +127,13 @@ export default class Bee {
         this.beeMesh.lookAt(lookAtTarget);
     }
 
-    update(neighbors, target) {
+    update(boidAlgoProperties, neighbors, target) {
+        this.boidAlgoProperties = boidAlgoProperties;
+
         let nextTarget = target.clone();
         if (this.nextHarvestingSpot) {
             nextTarget.copy(this.nextHarvestingSpot.spotMesh.position);
-            nextTarget.y += 150;
+            nextTarget.y += 50;
         }
         //Locomotion
         let acceleration = this.#applyBoidAlghoritm(nextTarget, neighbors);
@@ -189,7 +195,7 @@ export default class Bee {
         if (
             this.beeMesh.position.distanceTo(
                 this.nextHarvestingSpot.spotMesh.position
-            ) > 500
+            ) > 200
         ) {
             console.log("Reaching the target...");
             return;
@@ -238,13 +244,18 @@ export default class Bee {
             .normalize()
             .multiplyScalar(this.minSpeed());
 
-        const separationVelocity =
-            this.#separation(neighbors).multiplyScalar(separationWeight);
-        const alignmentVelocity =
-            this.#alignment(neighbors).multiplyScalar(alignmentWeight);
-        const cohesionVelocity =
-            this.#cohesion(neighbors).multiplyScalar(cohesionWeight);
-        const wanderVelocity = this.#wander().multiplyScalar(wanderWeight);
+        const separationVelocity = this.#separation(neighbors).multiplyScalar(
+            this.boidAlgoProperties.separationWeight
+        );
+        const alignmentVelocity = this.#alignment(neighbors).multiplyScalar(
+            this.boidAlgoProperties.alignmentWeight
+        );
+        const cohesionVelocity = this.#cohesion(neighbors).multiplyScalar(
+            this.boidAlgoProperties.cohesionWeight
+        );
+        const wanderVelocity = this.#wander().multiplyScalar(
+            this.boidAlgoProperties.wanderWeight
+        );
 
         acceleration.add(separationVelocity);
         acceleration.add(alignmentVelocity);
@@ -347,7 +358,7 @@ export default class Bee {
      * @returns {THREE.Vector3} velocity vector for wandering
      */
     #wander() {
-        const wanderDistance = 500;
+        const wanderDistance = 250;
         const wanderJitter = 50;
 
         // Get a random vector within a cube, which extends from 2.5 to -2.5

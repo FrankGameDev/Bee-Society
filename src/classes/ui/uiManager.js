@@ -198,7 +198,7 @@ export class UiManager {
         this.pollenLevel.textContent = this.gameManager.pollenInfo.pollenAmount;
         this.gameManager.pollenInfo.registerListener(
             function (amount) {
-                this.pollenLevel.textContent = amount;
+                this.pollenLevel.textContent = Math.floor(amount);
             }.bind(this)
         );
     }

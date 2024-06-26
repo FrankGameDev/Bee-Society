@@ -1,15 +1,15 @@
 import * as THREE from "three";
 import { Timer } from "three/addons/misc/Timer.js";
 
-const dayAndNightDuration = 30; //day and night duration
+const dayAndNightDuration = 10; //day and night duration
 const orbitDuration = dayAndNightDuration * 2;
 const speed = () => (2 * Math.PI) / orbitDuration; // Angular velocity
-const radius = 10000;
+const radius = 5000;
 
 const cycleState = { day: "DAY", night: "NIGHT" };
 
-var dayColor = new THREE.Color(0x87ceeb); // Giorno: azzurro
-var nightColor = new THREE.Color(0x000022); // Notte: blu scuro
+var dayColor = new THREE.Color(0x87ceeb);
+var nightColor = new THREE.Color(0x000022);
 
 export class DayNightCycle {
     /**
@@ -56,22 +56,26 @@ export class DayNightCycle {
             },
         };
 
-        this.sunLight = new THREE.DirectionalLight(0xfff000, 1);
+        this.sunLight = new THREE.DirectionalLight(0xffd500, 3);
         this.sunLight.position.set(45, 45, 45);
+        this.sunLight.shadow.mapSize.width = 2048;
+        this.sunLight.shadow.mapSize.height = 2048;
+        this.sunLight.shadow.camera.near = -0.00001;
+        this.sunLight.shadow.camera.far = 30000;
+        this.sunLight.shadow.camera.left = -5000;
+        this.sunLight.shadow.camera.right = 5000;
+        this.sunLight.shadow.camera.top = 5000;
+        this.sunLight.shadow.camera.bottom = -5000;
+        this.sunLight.shadow.bias = -0.001;
         this.sunLight.castShadow = true;
-        this.sunLight.shadow.mapSize.width = 1024;
-        this.sunLight.shadow.mapSize.height = 1024;
-        this.sunLight.shadow.camera.near = 0.5;
-        this.sunLight.shadow.camera.far = 500;
-        this.sunLight.shadow.camera.left = -50;
-        this.sunLight.shadow.camera.right = 50;
-        this.sunLight.shadow.camera.top = 50;
-        this.sunLight.shadow.camera.bottom = -50;
         this.scene.add(this.sunLight);
 
-        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        this.ambientLight.castShadow = true;
-        this.scene.add(this.ambientLight);
+        this.helper = new THREE.CameraHelper(this.sunLight.shadow.camera);
+        this.scene.add(this.helper);
+
+        const hemiLight = new THREE.HemisphereLight(0xa3a29b, 0xa3a29b, 0.5);
+        hemiLight.position.set(0, 1000, 0);
+        this.scene.add(hemiLight);
 
         this.isEnabled = true;
     }
@@ -80,6 +84,7 @@ export class DayNightCycle {
         if (!this.isEnabled) return;
 
         if (!this.cycleState) this.#setDay();
+        this.helper.update();
 
         this.timer.update();
         let time = this.timer.getElapsed();

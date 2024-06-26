@@ -97,8 +97,7 @@ button {
 
 .stats {
     position: fixed !important;
-    top: 0% !important;
-    left: 90% !important;
+    top: 95% !important;
 }
 
 .upgrade-button {
@@ -108,13 +107,13 @@ button {
     margin-left: 0.5em;
 }
 
-.upgrade-button > span {
+.upgrade-button > div {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: rgba(250, 235, 215, 0.5);
-    color: white;
-    font-size: medium;
+    background-color: rgba(116, 69, 8, 0.5);
+    color: antiquewhite;
+    font-size: large;
     font-weight: 200;
     margin-top: auto !important;
     margin-bottom: auto !important;

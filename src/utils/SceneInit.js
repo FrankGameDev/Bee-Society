@@ -3,25 +3,20 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import Stats from "three/examples/jsm/libs/stats.module";
 import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer";
 
-//TODO: add controls for shadows, boids parameters, obstacles parameters
-
 export class SceneInit {
     constructor() {
         this.scene = undefined;
         this.camera = undefined;
         this.renderer = undefined;
 
-        // NOTE: Camera params;
-        this.fov = 60;
+        //  Camera params
+        this.fov = 45;
         this.nearPlane = 1;
         this.farPlane = 30000;
 
-        this.clock = undefined;
         this.stats = undefined;
         this.controls = undefined;
 
-        this.ambientLight = undefined;
-        this.directionalLight = undefined;
         this.labelRenderer = undefined;
     }
 
@@ -37,18 +32,21 @@ export class SceneInit {
         this.camera.position.y = 300;
 
         const canvas = document.getElementById("webGlRenderer");
-        this.renderer = new THREE.WebGLRenderer({ canvas: canvas });
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
+            stencil: true,
+            antialias: true,
+        });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        // this.renderer.shadowMap.enabled = true;
-        // document.body.appendChild(this.renderer.domElement);
+        this.renderer.shadowMap.enabled = true;
+        document.body.appendChild(this.renderer.domElement);
 
-        this.clock = new THREE.Clock();
         this.controls = new OrbitControls(
             this.camera,
             this.renderer.domElement
         );
         this.stats = Stats();
-        this.stats.dom.className = "stats";
+        this.stats.dom.classList.toggle("stats", true);
         document.body.appendChild(this.stats.dom);
 
         this.labelRenderer = new CSS2DRenderer();

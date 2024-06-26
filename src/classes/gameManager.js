@@ -5,6 +5,7 @@ import { EnemyManager } from "./entities/enemy/enemyManager";
 import { Farm } from "./World building/farm";
 import { UiManager } from "./ui/uiManager";
 import BeeSwarm from "./entities/bee/beeSwarm";
+import { GUI } from "dat.gui";
 
 // Multipliers amount
 const movementSpeedThresholds = [
@@ -21,6 +22,7 @@ const upgradeCosts = {
     },
     farm: { newFlower: 15 },
 };
+
 /**
  * Defines game cycle logic and mantains information about currency and upgrades
  * @param {DayNightCycle} dayNightCycle
@@ -64,8 +66,18 @@ export class GameManager {
 
     // INIT
     async init() {
+        const gui = new GUI();
+        this.shadowParameters = {
+            enabled: false,
+        };
+        const shadowFolder = gui.addFolder("Shadow");
+        shadowFolder
+            .add(this.shadowParameters, "enabled")
+            .onChange(this.setShadowState.bind(this));
+        shadowFolder.open();
+
         this.farm = new Farm(this.scene, this.physicsWorld);
-        await this.farm.createFarm(1);
+        await this.farm.createFarm(10);
         console.log("farm loaded");
 
         this.dayNightCycle = new DayNightCycle(
@@ -75,12 +87,15 @@ export class GameManager {
         );
         console.log("day night cycle loaded");
 
+        this.setShadowState();
+
         this.defenderManager = new DefenderManager(
             10,
             new THREE.Vector3(0, 100, 0),
             this.scene,
             this.physicsWorld,
-            this
+            this,
+            gui
         );
         this.defenderAmount = this.defenderManager.defenderAmount;
         console.log("defender manager loaded");
@@ -96,7 +111,7 @@ export class GameManager {
         console.log("Enemies loaded");
 
         this.swarm = new BeeSwarm(
-            5,
+            20,
             {
                 radius: 20,
                 mass: 1,
@@ -107,7 +122,8 @@ export class GameManager {
             this.scene,
             this.physicsWorld,
             this.sceneInitializer,
-            this
+            this,
+            gui
         );
         await this.swarm.instantiateFlock();
         this.beeAmount = this.swarm.getBeeCount();
@@ -315,6 +331,16 @@ export class GameManager {
 
         this.removePollen(upgradeCost);
         this.farm.generateNewFarmingSpot();
+    }
+
+    //Graphics =================================================
+
+    /**
+     *
+     * @param {boolean} state
+     */
+    setShadowState() {
+        this.dayNightCycle.sunLight.castShadow = this.shadowParameters.enabled;
     }
 
     // UTILITY

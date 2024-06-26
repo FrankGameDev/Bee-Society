@@ -7,14 +7,41 @@ export class UiManager {
      */
     constructor(gameManager) {
         this.gameManager = gameManager;
+
+        this.topUI = document.getElementById("top-ui");
+        this.bottomUI = document.getElementById("bottom-ui");
+
         this.#setupPollen();
         this.#setupCycleTimer();
         this.#setupBeesUpgrades();
         this.#setupDefenderUpgrades();
         this.#setupFarmUpgrades();
+        this.#setupLoseUI();
     }
 
     // SETUP FUNCTIONS =================================================================
+
+    #setupLoseUI() {
+        this.loseUI = document.getElementById("lose-ui");
+        this.loseTitle = document.getElementById("lose-title");
+        this.playAgainBtn = document.getElementById("play-again-btn");
+        this.playAgainBtn.addEventListener(
+            "click",
+            function () {
+                location.reload();
+            },
+            false
+        );
+
+        this.gameManager.dayNightCycle.cycleCount.registerListener(
+            function (k) {
+                this.loseTitle.textContent =
+                    k == 1
+                        ? "You survived " + k + " cycle"
+                        : "You survived " + k + " cycles";
+            }.bind(this)
+        );
+    }
 
     #setupFarmUpgrades() {
         this.farmUpgradeButton = document.getElementById(
@@ -31,6 +58,10 @@ export class UiManager {
             "click",
             this.#newFlowerSpot.bind(this)
         );
+        this.farmSpotCostLabel = document.getElementById("farm-spot-cost");
+        this.farmSpotCostLabel.textContent = `Cost: ${this.gameManager.getUpgradeCostBasedOnLevel(
+            "farm.newFlower"
+        )}`;
     }
 
     #setupDefenderUpgrades() {
@@ -55,10 +86,12 @@ export class UiManager {
             this.#upgradeDefenderMovement.bind(this)
         );
 
-        this.defenderMovementLevelLabel =
-            document.getElementById("bee-movement-level");
-        this.defenderMovementCostLabel =
-            document.getElementById("bee-movement-cost");
+        this.defenderMovementLevelLabel = document.getElementById(
+            "defender-movement-level"
+        );
+        this.defenderMovementCostLabel = document.getElementById(
+            "defender-movement-cost"
+        );
         this.defenderMovementLevelLabel.textContent = `Level: ${this.gameManager.beeMovementSpeedLevel}`;
         this.defenderMovementCostLabel.textContent = `Cost: ${this.gameManager.getUpgradeCostBasedOnLevel(
             "bee.movement"
@@ -73,11 +106,13 @@ export class UiManager {
             this.#upgradeDefenderAmount.bind(this)
         );
 
-        this.defenderAmountLevelLabel =
-            document.getElementById("bee-amount-level");
-        this.defenderAmountCostLabel =
-            document.getElementById("bee-amount-cost");
-        this.defenderAmountLevelLabel.textContent = `Level: ${this.gameManager.defenderAmount}`;
+        this.defenderAmountLevelLabel = document.getElementById(
+            "defender-amount-level"
+        );
+        this.defenderAmountCostLabel = document.getElementById(
+            "defender-amount-cost"
+        );
+        this.defenderAmountLevelLabel.textContent = `Defenders amount: ${this.gameManager.defenderAmount}`;
         this.defenderAmountCostLabel.textContent = `Cost: ${this.gameManager.getUpgradeCostBasedOnLevel(
             "defender.amount"
         )}`;
@@ -180,38 +215,41 @@ export class UiManager {
         this.cycleTimerBar.classList.toggle("bg-black", true);
     }
 
+    hideAll() {
+        this.#toggleElementVisibility(this.topUI, false);
+        this.#toggleElementVisibility(this.bottomUI, false);
+    }
+
     // UPGRADES  =============
 
     showUpgradeMenus() {
-        this.#toggleButtonVisibility(this.beeUpgradeButton, true);
-        this.#toggleButtonVisibility(this.defenderUpgradeButton, true);
-        this.#toggleButtonVisibility(this.farmUpgradeButton, true);
+        this.#toggleElementVisibility(this.beeUpgradeButton, true);
+        this.#toggleElementVisibility(this.defenderUpgradeButton, true);
+        this.#toggleElementVisibility(this.farmUpgradeButton, true);
     }
 
     hideUpgradeMenus() {
-        this.#toggleButtonVisibility(this.beeUpgradeMenu, false);
-        this.#toggleButtonVisibility(this.beeUpgradeButton, false);
-        this.#toggleButtonVisibility(this.defenderUpgradeMenu, false);
-        this.#toggleButtonVisibility(this.defenderUpgradeButton, false);
-        this.#toggleButtonVisibility(this.farmUpgradeMenu, false);
-        this.#toggleButtonVisibility(this.farmUpgradeButton, false);
+        this.#toggleElementVisibility(this.beeUpgradeMenu, false);
+        this.#toggleElementVisibility(this.beeUpgradeButton, false);
+        this.#toggleElementVisibility(this.defenderUpgradeMenu, false);
+        this.#toggleElementVisibility(this.defenderUpgradeButton, false);
+        this.#toggleElementVisibility(this.farmUpgradeMenu, false);
+        this.#toggleElementVisibility(this.farmUpgradeButton, false);
     }
 
-    #toggleMenu(menu, buttonsToHide) {
-        console.log(`Toggle menu: ${menu.id}`);
-
+    #toggleMenu(menu, elementToHide) {
         const isHidden = menu.classList.contains("hidden");
         menu.classList.toggle("hidden", !isHidden);
         menu.classList.toggle("visible", isHidden);
 
-        buttonsToHide.forEach((button) => {
-            this.#toggleButtonVisibility(button, !isHidden);
+        elementToHide.forEach((elem) => {
+            this.#toggleElementVisibility(elem, !isHidden);
         });
     }
 
-    #toggleButtonVisibility(button, isVisible) {
-        button.classList.toggle("visible", isVisible);
-        button.classList.toggle("hidden", !isVisible);
+    #toggleElementVisibility(element, isVisible) {
+        element.classList.toggle("visible", isVisible);
+        element.classList.toggle("hidden", !isVisible);
     }
 
     // BEE UPGRADES =================================================
@@ -275,5 +313,15 @@ export class UiManager {
 
     #newFlowerSpot() {
         this.gameManager.generateNewFarmingSpot();
+        this.farmSpotCostLabel.textContent = `Cost: ${this.gameManager.getUpgradeCostBasedOnLevel(
+            "farm.newFlower"
+        )}`;
+    }
+
+    // LOSE UI ===========
+
+    showLoseUI() {
+        this.#toggleElementVisibility(this.loseUI, true);
+        this.#toggleElementVisibility(this.playAgainBtn, true);
     }
 }

@@ -35,10 +35,14 @@ export class Flower {
             scene.add(flower);
 
             // Spawn a mesh to enable the onClick event intersection
-            const spotClickableGeometry = new THREE.BoxGeometry(15, 10, 15);
+            const spotClickableGeometry = new THREE.BoxGeometry(
+                flower.scale.x / 5,
+                flower.scale.y / 5,
+                flower.scale.z / 5
+            );
             const spotClickableMaterial = new THREE.MeshBasicMaterial({
-                wireframe: true,
-                opacity: 0,
+                transparent: true,
+                opacity: 0.25,
             });
             this.spotMesh = new THREE.Mesh(
                 spotClickableGeometry,

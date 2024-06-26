@@ -68,26 +68,19 @@ export class DayNightCycle {
         this.sunLight.shadow.camera.top = 50;
         this.sunLight.shadow.camera.bottom = -50;
         this.scene.add(this.sunLight);
-        this.sunLightHelper = new THREE.DirectionalLightHelper(
-            this.sunLight,
-            100
-        );
-        this.scene.add(this.sunLightHelper);
-
-        // TODO: Remove
-        const sunSphere = new THREE.SphereGeometry(500);
-        const sunSphereMat = new THREE.MeshBasicMaterial({ wireframe: true });
-        this.sunMesh = new THREE.Mesh(sunSphere, sunSphereMat);
-        this.sunMesh.position.copy(this.sunLight.position);
-        this.scene.add(this.sunMesh);
 
         this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         this.ambientLight.castShadow = true;
         this.scene.add(this.ambientLight);
+
+        this.isEnabled = true;
     }
 
     async updateCycle() {
+        if (!this.isEnabled) return;
+
         if (!this.cycleState) this.#setDay();
+
         this.timer.update();
         let time = this.timer.getElapsed();
         this.timerInfo.time = time;
@@ -102,8 +95,6 @@ export class DayNightCycle {
         var sunPositionX = radius * Math.cos(angle);
         var sunPositionY = radius * Math.sin(angle);
         this.sunLight.position.set(sunPositionX, sunPositionY, 0);
-        this.sunLightHelper.update();
-        this.sunMesh.position.copy(this.sunLight.position);
 
         var alpha = (sunPositionY + radius) / (2 * radius); // Normalizza Y da 0 a 1
         var currentColor = this.lerpColor(nightColor, dayColor, alpha);
@@ -131,5 +122,9 @@ export class DayNightCycle {
         if (this.cycleState === cycleState.night) return;
         this.cycleState = cycleState.night;
         await this.onNightCallback();
+    }
+
+    disable() {
+        this.isEnabled = false;
     }
 }

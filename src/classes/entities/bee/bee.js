@@ -154,6 +154,7 @@ export default class Bee {
     }
 
     disable() {
+        this.resetHarvesting();
         this.scene.remove(this.beeMesh);
         this.physicsWorld.removeBody(this.beeBody);
     }

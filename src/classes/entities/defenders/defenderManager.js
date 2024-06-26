@@ -16,14 +16,12 @@ export class DefenderManager {
         this.defenderReference = [];
         this.enemies = [];
         this.gameManager = gameManager;
-
-        this.getDefenderCount = () => this.defenderReference.length;
     }
 
     async instantiateDefenders(enemies) {
         this.enemies = enemies;
         for (let i = 0; i < this.defenderAmount; i++) {
-            await this.addNewDefender();
+            await this.addNewDefender(true);
         }
     }
 
@@ -46,6 +44,10 @@ export class DefenderManager {
         );
         await defender.instantiate();
         this.defenderReference.push(defender);
+    }
+
+    incrementDefenderAmount(amount = 1) {
+        this.defenderAmount += amount;
     }
 
     setEnemyReference(enemies) {

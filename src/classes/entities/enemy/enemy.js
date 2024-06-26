@@ -2,8 +2,8 @@ import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 
-const minSpeed = 100;
-const maxSpeed = 250;
+const minSpeed = 1000;
+const maxSpeed = 1000;
 const damage = 1;
 
 const enemyModelPath = "/bee_low_poly/scene.gltf";

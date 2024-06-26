@@ -7,13 +7,18 @@ import { UiManager } from "./ui/uiManager";
 import BeeSwarm from "./entities/bee/beeSwarm";
 
 // Multipliers amount
-const movementSpeedThresholds = [1, 1.25, 1.4, 1.5, 1.6, 1.75, 2]; // Used for bees and defenders
+const movementSpeedThresholds = [
+    1, 1.25, 1.4, 1.5, 1.6, 1.75, 2, 2.1, 2.2, 2.4, 2.5, 2.7, 3,
+]; // Used for bees and defenders
 const upgradeCosts = {
     bee: {
-        movement: [10, 12, 15, 18, 20, 25],
+        movement: [10, 12, 15, 18, 20, 25, 27, 30, 35, 40, 45, 48, 50],
         amount: 15,
     },
-    defender: { movement: [10, 12, 15, 18, 20, 25], amount: 20 },
+    defender: {
+        movement: [10, 12, 15, 18, 20, 25, 27, 30, 35, 40, 45, 48, 50],
+        amount: 15,
+    },
     farm: { newFlower: 15 },
 };
 /**
@@ -30,7 +35,7 @@ export class GameManager {
         this.sceneInitializer = sceneInitializer;
 
         this.pollenInfo = {
-            _value: 1000,
+            _value: 0,
             listener: function (amount) {},
             /**
              * @param {number} amount
@@ -60,7 +65,7 @@ export class GameManager {
     // INIT
     async init() {
         this.farm = new Farm(this.scene, this.physicsWorld);
-        await this.farm.createFarm();
+        await this.farm.createFarm(1);
         console.log("farm loaded");
 
         this.dayNightCycle = new DayNightCycle(
@@ -77,12 +82,17 @@ export class GameManager {
             this.physicsWorld,
             this
         );
-
+        this.defenderAmount = this.defenderManager.defenderAmount;
         console.log("defender manager loaded");
 
-        this.enemyManager = new EnemyManager(2, this.scene, this.physicsWorld, {
-            dimension: this.farm.getGroundDimension(),
-        });
+        this.enemyManager = new EnemyManager(
+            10,
+            this.scene,
+            this.physicsWorld,
+            {
+                dimension: this.farm.getGroundDimension(),
+            }
+        );
         console.log("Enemies loaded");
 
         this.swarm = new BeeSwarm(
@@ -117,6 +127,7 @@ export class GameManager {
             case "NIGHT":
                 this.enemyManager.updateEnemies();
                 this.defenderManager.updateDefenders();
+                this.#checkLoseCondition();
                 break;
         }
     }
@@ -133,15 +144,20 @@ export class GameManager {
     }
 
     // Win/Lose condition =================================================================
-    loseCondition() {
+    #checkLoseCondition() {
         const loseCondition =
             this.farm.farmingSpots.filter(
-                (flower) =>
-                    flower.currentPollenAmount === 0 && flower.wasAttacked
+                (flower) => flower.currentPollenLevel <= 0 && flower.wasAttacked
             ).length === this.farm.farmingSpots.length;
 
         if (loseCondition) {
             console.log("Game lost");
+            this.#despawnEnemies();
+            this.#despawnDefenders();
+            this.#disableBeeSwarm();
+            this.#disableGameUI();
+            this.dayNightCycle.disable();
+            this.uiManager.showLoseUI();
         }
     }
 
@@ -176,13 +192,14 @@ export class GameManager {
         );
         this.#enableNightUI();
         this.#disableBeeSwarm();
+        this.#resetFlowers();
     }
 
     async #spawnEnemies() {
         await this.enemyManager.instantiateEnemies(
             this.farm.farmingSpots,
             this.defenderManager.defenderReference,
-            this.dayNightCycle.cycleCount
+            this.dayNightCycle.cycleCount._value
         );
     }
 
@@ -210,6 +227,10 @@ export class GameManager {
         this.uiManager.hideUpgradeMenus();
     }
 
+    #disableGameUI() {
+        this.uiManager.hideAll();
+    }
+
     #enableBeeSwarm() {
         this.swarm.enableAll();
     }
@@ -232,7 +253,7 @@ export class GameManager {
             console.error("Not enough pollen to upgrade");
             return;
         }
-        if (this.beeMovementSpeedLevel == movementSpeedThresholds.length - 1) {
+        if (this.beeMovementSpeedLevel == movementSpeedThresholds.length) {
             console.log("Bee movement speed reached max level");
             return;
         }
@@ -262,7 +283,7 @@ export class GameManager {
             console.error("Not enough pollen to upgrade");
             return;
         }
-        if (this.beeMovementSpeedLevel == movementSpeedThresholds.length - 1) {
+        if (this.defenderMovementSpeedLevel == movementSpeedThresholds.length) {
             console.log("defender movement speed reached max level");
             return;
         }
@@ -279,8 +300,8 @@ export class GameManager {
         }
 
         this.removePollen(upgradeCost);
-        await this.defenderManager.addNewDefender(true);
-        this.defenderAmount = this.defenderManager.getDefenderCount();
+        this.defenderManager.incrementDefenderAmount();
+        this.defenderAmount = this.defenderManager.defenderAmount;
     }
 
     // FARM UPGRADES =================================================
@@ -323,8 +344,17 @@ export class GameManager {
                 return upgradeCosts.defender.movement[
                     this.defenderMovementSpeedLevel - 1
                 ];
+            case "defender.amount":
+                return Math.floor(
+                    upgradeCosts.defender.amount * (this.defenderAmount * 0.2)
+                );
             case "farm.newFlower":
-                return upgradeCosts.farm.newFlower;
+                return Math.floor(
+                    upgradeCosts.farm.newFlower *
+                        (this.farm.farmingSpots.length * 0.1)
+                );
+            default:
+                return -1;
         }
     }
 }

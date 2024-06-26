@@ -5,12 +5,22 @@ import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 const startingMinSpeed = 100;
 const startingMaxSpeed = 250;
 
+const cohesionWeight = 0.3;
+const separationWeight = 5000;
+const alignmentWeight = 0.1;
+const wanderWeight = 5;
+
+const separationRange = 50;
+const cohesionRange = 50;
+const alignmentRange = 50;
+const obstacleRange = 50;
+
 const beeModelPath = "/bee_low_poly/scene.gltf";
 
 export default class DefenderBee {
     /**
      *
-     * @param {{radius: number, position: THREE.Vector3, mass: number, detectionRadius: number, color: THREE.Color, modelEnabled: boolean}} options
+     * @param {{radius: number, position: THREE.Vector3, mass: number, color: THREE.Color, modelEnabled: boolean}} options
      * @param {Array} enemies
      * @param {{onDeathCallback: event, onEnemyKillCallback: event}} callbacks
      * @param {event} onDeathCallback
@@ -21,10 +31,6 @@ export default class DefenderBee {
         this.startPosition = options.position;
         this.color = options.color;
         this.mass = options.mass;
-        this.detectionRadius =
-            options.detectionRadius > this.radius
-                ? options.detectionRadius
-                : this.radius * 2;
 
         this.modelEnabled = options.modelEnabled;
         this.modelLoader = new GLTFCustomLoader();
@@ -80,7 +86,7 @@ export default class DefenderBee {
                 this.modelsToLoad.bee
             );
             this.beeModel = model.scene.children[0].clone();
-            this.beeModel.scale.multiplyScalar(20);
+            this.beeModel.scale.multiplyScalar(5);
             this.beeModel.rotation.z = Math.PI / 2;
         }
 
@@ -103,20 +109,21 @@ export default class DefenderBee {
 
         this.scene.add(this.beeMesh);
         this.physicsWorld.addBody(this.beeBody);
-        this.#bindMeshBody();
+        this.#bindMeshBody(this.startPosition);
     }
 
     // UPDATE LOGIC =================================================
 
-    #bindMeshBody() {
+    #bindMeshBody(lookAtTarget) {
         this.beeMesh.position.copy(this.beeBody.position);
-        this.beeMesh.quaternion.copy(this.beeBody.quaternion);
+        this.beeMesh.lookAt(lookAtTarget);
     }
 
-    //TODO: Add turn velocity and wander logic
-    update() {
+    update(neighbors) {
+        this.nearestEnemy = this.#getNearestEnemy();
+
         //Locomotion
-        this.nearestEnemy = this.#reachNearestEnemy();
+        this.nextTarget = this.#goToTheNextTarget(this.nearestEnemy, neighbors);
 
         if (
             !this.isAttacking &&
@@ -128,7 +135,7 @@ export default class DefenderBee {
             // Can attack
             this.#attackEnemy();
         }
-        this.#bindMeshBody();
+        this.#bindMeshBody(this.nextTarget);
     }
 
     takeDamage(amount = 1) {
@@ -173,29 +180,15 @@ export default class DefenderBee {
 
         return nearest;
     }
-    #reachNearestEnemy() {
-        this.nextTarget = new THREE.Vector3();
-        this.nearestEnemy = this.#getNearestEnemy();
-        if (!this.nearestEnemy) this.nextTarget.copy(this.startPosition);
-        else this.nextTarget.copy(this.nearestEnemy.enemyMesh.position);
 
-        let acceleration = new THREE.Vector3(
-            this.beeBody.velocity.x,
-            this.beeBody.velocity.y,
-            this.beeBody.velocity.z
-        );
-        const targetVelocity = new THREE.Vector3()
-            .subVectors(this.nextTarget, this.beeBody.position)
-            .normalize()
-            .multiplyScalar(this.minSpeed());
+    #goToTheNextTarget(nearestEnemy, neighbors) {
+        let nextTarget = new THREE.Vector3();
+        if (!nearestEnemy) nextTarget.copy(this.startPosition);
+        else nextTarget.copy(nearestEnemy.enemyMesh.position);
 
-        acceleration.add(targetVelocity);
-        if (acceleration.length() > this.maxSpeed()) {
-            acceleration.normalize().multiplyScalar(this.maxSpeed());
-        }
+        let acceleration = this.#applyBoidAlghoritm(nextTarget, neighbors);
         this.beeBody.velocity.copy(acceleration);
-
-        return this.nearestEnemy;
+        return nextTarget;
     }
 
     #attackEnemy() {
@@ -234,5 +227,162 @@ export default class DefenderBee {
         if (this.attackingRoutine) clearInterval(this.attackingRoutine);
         this.attackingRoutine = undefined;
         this.isAttacking = false;
+    }
+
+    // BOID LOGIC =================================================
+
+    /**
+     *
+     * @param {THREE.Vector3} target Desired target position
+     * @param {*} neighbors All the bee neighbors
+     * @returns calculated acceleration
+     */
+    #applyBoidAlghoritm(target, neighbors) {
+        let acceleration = new THREE.Vector3(
+            this.beeBody.velocity.x,
+            this.beeBody.velocity.y,
+            this.beeBody.velocity.z
+        );
+
+        const targetVelocity = new THREE.Vector3()
+            .subVectors(target, this.beeBody.position)
+            .normalize()
+            .multiplyScalar(this.minSpeed());
+
+        const separationVelocity =
+            this.#separation(neighbors).multiplyScalar(separationWeight);
+        const alignmentVelocity =
+            this.#alignment(neighbors).multiplyScalar(alignmentWeight);
+        const cohesionVelocity =
+            this.#cohesion(neighbors).multiplyScalar(cohesionWeight);
+        const wanderVelocity = this.#wander().multiplyScalar(wanderWeight);
+
+        acceleration.add(separationVelocity);
+        acceleration.add(alignmentVelocity);
+        acceleration.add(cohesionVelocity);
+        acceleration.add(targetVelocity);
+        acceleration.add(wanderVelocity);
+
+        // limit velocity
+        if (acceleration.length() > this.maxSpeed()) {
+            acceleration.normalize().multiplyScalar(this.maxSpeed());
+        }
+        return acceleration;
+    }
+    /**
+     * Separation logic
+     * @param {Bee[]} neighbors
+     * @returns {THREE.Vector3} velocity vector for separation
+     */
+    #separation(neighbors) {
+        let separationForce = new THREE.Vector3();
+
+        neighbors.forEach((neighbour) => {
+            const distance = neighbour.beeMesh.position.distanceTo(
+                this.beeMesh.position
+            );
+            // la forza di separazione aumenta inversamente alla distanza,
+            // così i boids che si avvicinano troppo tra loro saranno respinti con una forza maggiore.
+            if (distance < separationRange && distance > 0) {
+                let repulsion = new THREE.Vector3()
+                    .subVectors(
+                        this.beeMesh.position,
+                        neighbour.beeMesh.position
+                    )
+                    .divideScalar(distance)
+                    .divideScalar(distance);
+                separationForce.add(repulsion);
+            }
+        });
+
+        return separationForce;
+    }
+
+    /**
+     * Alignemnt logic
+     * @param {Bee[]} neighbors
+     * @returns {THREE.Vector3} velocity vector for alignment
+     */
+    #alignment(neighbors) {
+        let avgVelocity = new THREE.Vector3();
+        let neighbourInRange = 0;
+
+        neighbors.forEach((neighbour) => {
+            const distance = neighbour.beeMesh.position.distanceTo(
+                this.beeMesh.position
+            );
+
+            if (distance < alignmentRange) {
+                avgVelocity.add(neighbour.beeBody.velocity);
+                neighbourInRange += 1;
+            }
+        });
+
+        if (neighbourInRange > 0)
+            avgVelocity
+                .divideScalar(neighbourInRange)
+                .sub(this.beeBody.velocity);
+
+        return avgVelocity;
+    }
+
+    /**
+     * Cohesion logic
+     * @param {Bee[]} neighbors
+     * @returns {THREE.Vector3} velocity vector for cohesion
+     */
+    #cohesion(neighbors) {
+        let avgPosition = new THREE.Vector3();
+        let neighbourInRange = 0;
+
+        neighbors.forEach((neighbour) => {
+            const distance = neighbour.beeMesh.position.distanceTo(
+                this.beeMesh.position
+            );
+
+            if (distance < cohesionRange) {
+                avgPosition.add(neighbour.beeMesh.position);
+                neighbourInRange += 1;
+            }
+        });
+
+        if (neighbourInRange > 0)
+            avgPosition
+                .divideScalar(neighbourInRange)
+                .sub(this.beeMesh.position);
+
+        return avgPosition;
+    }
+    /**
+     * Wander logic
+     * @returns {THREE.Vector3} velocity vector for wandering
+     */
+    #wander() {
+        const wanderDistance = 500;
+        const wanderJitter = 50;
+
+        // Get a random vector within a cube, which extends from 2.5 to -2.5
+        const randomVector = new THREE.Vector3(
+            (Math.random() - 0.5) * 5,
+            (Math.random() - 0.5) * 5,
+            (Math.random() - 0.5) * 5
+        )
+            .normalize()
+            .multiplyScalar(wanderJitter);
+
+        let normalizedVelocity = new THREE.Vector3();
+        normalizedVelocity.set(
+            this.beeBody.velocity.x,
+            this.beeBody.velocity.y,
+            this.beeBody.velocity.z
+        );
+        normalizedVelocity = normalizedVelocity.normalize();
+
+        const circleCenter = normalizedVelocity.multiplyScalar(wanderDistance);
+
+        // Combine the circle center and the random vector to get the wander force
+        const wanderForce = circleCenter.add(randomVector);
+
+        return wanderForce;
     }
 }

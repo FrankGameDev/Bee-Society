@@ -55,7 +55,7 @@ export class DefenderManager {
         this.defenderReference.forEach((d) => (d.enemies = enemies));
     }
     updateDefenders() {
-        this.defenderReference.forEach((d) => d.update());
+        this.defenderReference.forEach((d) => d.update(this.defenderReference));
     }
 
     disableAll() {

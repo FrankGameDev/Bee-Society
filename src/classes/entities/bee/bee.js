@@ -21,7 +21,7 @@ const beeModelPath = "/bee_low_poly/scene.gltf";
 export default class Bee {
     /**
      *
-     * @param {{radius: number, position: THREE.Vector3, mass: number, detectionRadius: number, color: THREE.Color, modelEnabled: boolean}} options
+     * @param {{radius: number, position: THREE.Vector3, mass: number, color: THREE.Color, modelEnabled: boolean}} options
      * @param {Array} farmingSpots
      * @param {GameManager} gameManager
      */
@@ -41,10 +41,7 @@ export default class Bee {
         this.startPosition = options.position;
         this.color = options.color;
         this.mass = options.mass;
-        this.detectionRadius =
-            options.detectionRadius > this.radius
-                ? options.detectionRadius
-                : this.radius * 2;
+
         this.minSpeed = () =>
             startingMinSpeed * this.gameManager.getBeeMovementSpeedMultiplier();
         this.maxSpeed = () =>
@@ -126,7 +123,6 @@ export default class Bee {
         this.beeMesh.lookAt(lookAtTarget);
     }
 
-    //TODO: Add turn velocity and wander logic
     update(neighbors, target) {
         let nextTarget = target.clone();
         if (this.nextHarvestingSpot) {
@@ -255,7 +251,6 @@ export default class Bee {
         acceleration.add(cohesionVelocity);
         acceleration.add(targetVelocity);
         acceleration.add(wanderVelocity);
-        //TODO handle rotation only towards the target and, if its touching something, based on the dot product
 
         // limit velocity
         if (acceleration.length() > this.maxSpeed()) {

@@ -3,6 +3,7 @@ import DefenderBee from "./defenderBee";
 import { GameManager } from "../../gameManager";
 import { GUI } from "dat.gui";
 import { World } from "cannon-es";
+import * as THREE from "three";
 
 export class DefenderManager {
     /**
@@ -14,16 +15,8 @@ export class DefenderManager {
      * @param {GameManager} gameManager
      * @param {GUI} gui
      */
-    constructor(
-        defenderAmount,
-        spawnPosition,
-        scene,
-        physicsWorld,
-        gameManager,
-        gui
-    ) {
+    constructor(defenderAmount, scene, physicsWorld, gameManager, gui) {
         this.defenderAmount = defenderAmount;
-        this.spawnPosition = spawnPosition;
         this.scene = scene;
         this.physicsWorld = physicsWorld;
 
@@ -61,7 +54,7 @@ export class DefenderManager {
         let defender = new DefenderBee(
             {
                 radius: 10,
-                position: this.spawnPosition,
+                position: this.#getRandomSpawnPosition(),
                 mass: 1,
                 modelEnabled: true,
             },
@@ -112,6 +105,14 @@ export class DefenderManager {
     #removeReference(defender) {
         this.defenderReference = this.defenderReference.filter(
             (d) => d !== defender
+        );
+    }
+
+    #getRandomSpawnPosition() {
+        return new THREE.Vector3(
+            (Math.random() - 0.5) * 150,
+            150,
+            (Math.random() - 0.5) * 150
         );
     }
 }

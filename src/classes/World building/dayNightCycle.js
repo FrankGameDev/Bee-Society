@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Timer } from "three/addons/misc/Timer.js";
 
-const dayAndNightDuration = 60; //day and night duration
+const dayAndNightDuration = 65; //day and night duration
 const orbitDuration = dayAndNightDuration * 2;
 const speed = () => (2 * Math.PI) / orbitDuration; // Angular velocity
 const radius = 5000;
@@ -110,6 +110,11 @@ export class DayNightCycle {
         var sunPositionX = radius * Math.cos(angle);
         var sunPositionY = radius * Math.sin(angle);
         this.sunLight.position.set(sunPositionX, sunPositionY, 0);
+
+        var angle = time * speed();
+        var moonPositionX = -radius * Math.cos(angle);
+        var moonPositionY = -radius * Math.sin(angle);
+        this.moonLight.position.set(moonPositionX, moonPositionY, 0);
 
         var alpha = (sunPositionY + radius) / (2 * radius); // Normalizza Y da 0 a 1
         var currentColor = this.lerpColor(nightColor, dayColor, alpha);

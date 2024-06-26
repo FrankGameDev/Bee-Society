@@ -2,18 +2,12 @@ import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 
-const startingMinSpeed = 100;
-const startingMaxSpeed = 250;
-
-const cohesionWeight = 0.3;
-const separationWeight = 5000;
-const alignmentWeight = 0.1;
-const wanderWeight = 5;
+const startingMinSpeed = 200;
+const startingMaxSpeed = 400;
 
 const separationRange = 50;
 const cohesionRange = 50;
 const alignmentRange = 50;
-const obstacleRange = 50;
 
 const beeModelPath = "/ps1_bee/scene.gltf";
 
@@ -82,7 +76,7 @@ export default class DefenderBee {
                 this.modelsToLoad.bee
             );
             this.beeModel = model.scene.children[0].clone();
-            this.beeModel.scale.multiplyScalar(15);
+            this.beeModel.scale.multiplyScalar(25);
             this.beeModel.rotation.z = Math.PI / 2;
             this.beeModel.traverse(function (child) {
                 if (child.isMesh) {

@@ -91,7 +91,6 @@ export class GameManager {
 
         this.defenderManager = new DefenderManager(
             5,
-            new THREE.Vector3(0, 100, 0),
             this.scene,
             this.physicsWorld,
             this,
@@ -341,6 +340,7 @@ export class GameManager {
      */
     setShadowState() {
         this.dayNightCycle.sunLight.castShadow = this.shadowParameters.enabled;
+        this.dayNightCycle.moonLight.castShadow = this.shadowParameters.enabled;
     }
 
     // UTILITY

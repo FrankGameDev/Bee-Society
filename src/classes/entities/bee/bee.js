@@ -4,17 +4,10 @@ import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 
 const startingMinSpeed = 100;
 const startingMaxSpeed = 250;
-const startingHarvestingSpeed = 1; //seconds
-
-let cohesionWeight = 0.3;
-let separationWeight = 500;
-let alignmentWeight = 0.1;
-let wanderWeight = 5;
 
 const separationRange = 50;
 const cohesionRange = 50;
 const alignmentRange = 50;
-const obstacleRange = 50;
 
 const beeModelPath = "/ps1_bee/scene.gltf";
 

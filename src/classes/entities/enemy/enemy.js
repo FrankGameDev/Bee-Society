@@ -101,8 +101,8 @@ export class Enemy {
         //If there is an error during loading the model
         const geometry = new THREE.SphereGeometry(this.radius);
         const material = new THREE.MeshBasicMaterial({
-            transparent: true,
-            opacity: 0,
+            wireframe: true,
+            color: new THREE.Color("red"),
         });
         this.enemyMesh = new THREE.Mesh(geometry, material);
         if (this.enemyModel) this.enemyMesh.add(this.enemyModel);

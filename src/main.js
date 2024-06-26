@@ -47,7 +47,6 @@ async function main() {
     };
 
     animate();
-    console.log("Step");
 }
 
 main();

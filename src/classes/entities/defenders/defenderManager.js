@@ -1,7 +1,13 @@
 import DefenderBee from "./defenderBee";
 
 export class DefenderManager {
-    constructor(defenderAmount, spawnPosition, scene, physicsWorld) {
+    constructor(
+        defenderAmount,
+        spawnPosition,
+        scene,
+        physicsWorld,
+        gameManager
+    ) {
         this.defenderAmount = defenderAmount;
         this.spawnPosition = spawnPosition;
         this.scene = scene;
@@ -9,29 +15,39 @@ export class DefenderManager {
 
         this.defenderReference = [];
         this.enemies = [];
+        this.gameManager = gameManager;
+
+        this.getDefenderCount = () => this.defenderReference.length;
     }
 
     async instantiateDefenders(enemies) {
+        this.enemies = enemies;
         for (let i = 0; i < this.defenderAmount; i++) {
-            let defender = new DefenderBee(
-                {
-                    radius: 10,
-                    position: this.spawnPosition,
-                    mass: 1,
-                    modelEnabled: true,
-                },
-                enemies,
-                this.scene,
-                this.physicsWorld,
-                {
-                    onDeathCallback: this.#removeReference.bind(this),
-                    onEnemyKillCallback: this.#removeEnemyReference.bind(this),
-                }
-            );
-            await defender.instantiate();
-            this.defenderReference.push(defender);
+            await this.addNewDefender();
         }
     }
+
+    async addNewDefender() {
+        let defender = new DefenderBee(
+            {
+                radius: 10,
+                position: this.spawnPosition,
+                mass: 1,
+                modelEnabled: true,
+            },
+            this.enemies,
+            this.scene,
+            this.physicsWorld,
+            this.gameManager,
+            {
+                onDeathCallback: this.#removeReference.bind(this),
+                onEnemyKillCallback: this.#removeEnemyReference.bind(this),
+            }
+        );
+        await defender.instantiate();
+        this.defenderReference.push(defender);
+    }
+
     setEnemyReference(enemies) {
         this.enemies = enemies;
         this.defenderReference.forEach((d) => (d.enemies = enemies));

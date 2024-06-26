@@ -2,10 +2,10 @@ import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { GLTFCustomLoader } from "../../../utils/gltfCustomLoader";
 
-const minSpeed = 100;
-const maxSpeed = 250;
+const startingMinSpeed = 100;
+const startingMaxSpeed = 250;
 
-const beeModelPath = "/bee_2/scene.gltf";
+const beeModelPath = "/bee_low_poly/scene.gltf";
 
 export default class DefenderBee {
     /**
@@ -15,7 +15,7 @@ export default class DefenderBee {
      * @param {{onDeathCallback: event, onEnemyKillCallback: event}} callbacks
      * @param {event} onDeathCallback
      */
-    constructor(options, enemies, scene, physicsWorld, callbacks) {
+    constructor(options, enemies, scene, physicsWorld, gameManager, callbacks) {
         if (!options) console.error("Bee options not available");
         this.radius = options.radius;
         this.startPosition = options.position;
@@ -43,9 +43,17 @@ export default class DefenderBee {
 
         this.onDeathCallback = callbacks.onDeathCallback;
         this.onEnemyKillCallback = callbacks.onEnemyKillCallback;
+        this.gameManager = gameManager;
 
         this.hp = 10;
         this.isAttacking = false;
+
+        this.minSpeed = () =>
+            startingMinSpeed *
+            this.gameManager.getDefenderMovementSpeedMultiplier();
+        this.maxSpeed = () =>
+            startingMaxSpeed *
+            this.gameManager.getDefenderMovementSpeedMultiplier();
     }
 
     // INITIALIZATION =================================================================
@@ -72,12 +80,15 @@ export default class DefenderBee {
                 this.modelsToLoad.bee
             );
             this.beeModel = model.scene.children[0].clone();
+            this.beeModel.scale.multiplyScalar(20);
+            this.beeModel.rotation.z = Math.PI / 2;
         }
 
         const geometry = new THREE.SphereGeometry(this.radius);
         const material = new THREE.MeshBasicMaterial({
-            transparent: true,
-            opacity: 0,
+            wireframe: true,
+            color: new THREE.Color("green"),
+            // opacity: 0,
         });
         this.beeMesh = new THREE.Mesh(geometry, material);
         if (this.beeModel) this.beeMesh.add(this.beeModel);
@@ -176,11 +187,11 @@ export default class DefenderBee {
         const targetVelocity = new THREE.Vector3()
             .subVectors(this.nextTarget, this.beeBody.position)
             .normalize()
-            .multiplyScalar(minSpeed);
+            .multiplyScalar(this.minSpeed());
 
         acceleration.add(targetVelocity);
-        if (acceleration.length() > maxSpeed) {
-            acceleration.normalize().multiplyScalar(maxSpeed);
+        if (acceleration.length() > this.maxSpeed()) {
+            acceleration.normalize().multiplyScalar(this.maxSpeed());
         }
         this.beeBody.velocity.copy(acceleration);
 

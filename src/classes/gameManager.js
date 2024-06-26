@@ -7,13 +7,13 @@ import { UiManager } from "./ui/uiManager";
 import BeeSwarm from "./entities/bee/beeSwarm";
 
 // Multipliers amount
-const beeMovementSpeedThresholds = [1, 1.25, 1.4, 1.5, 1.6, 1.75, 2];
+const movementSpeedThresholds = [1, 1.25, 1.4, 1.5, 1.6, 1.75, 2]; // Used for bees and defenders
 const upgradeCosts = {
     bee: {
         movement: [10, 12, 15, 18, 20, 25],
         amount: 15,
     },
-    defender: {},
+    defender: { movement: [10, 12, 15, 18, 20, 25], amount: 20 },
     farm: { newFlower: 15 },
 };
 /**
@@ -49,7 +49,12 @@ export class GameManager {
         this.beeAmount = undefined;
         this.beeMovementSpeedLevel = 1;
         this.getBeeMovementSpeedMultiplier = () =>
-            beeMovementSpeedThresholds[this.beeMovementSpeedLevel - 1];
+            movementSpeedThresholds[this.beeMovementSpeedLevel - 1];
+
+        this.defenderAmount = undefined;
+        this.defenderMovementSpeedLevel = 1;
+        this.getDefenderMovementSpeedMultiplier = () =>
+            movementSpeedThresholds[this.defenderMovementSpeedLevel - 1];
     }
 
     // INIT
@@ -67,9 +72,10 @@ export class GameManager {
 
         this.defenderManager = new DefenderManager(
             10,
-            new THREE.Vector3(100, 0, 0),
+            new THREE.Vector3(0, 100, 0),
             this.scene,
-            this.physicsWorld
+            this.physicsWorld,
+            this
         );
 
         console.log("defender manager loaded");
@@ -218,16 +224,15 @@ export class GameManager {
 
     // UPGRADES =================================================
 
+    // BEES UPGRADES =================================================
+
     upgradeBeeMovementSpeed() {
         const upgradeCost = this.getUpgradeCostBasedOnLevel("bee.movement");
         if (upgradeCost == -1 || this.pollenInfo.pollenAmount < upgradeCost) {
             console.error("Not enough pollen to upgrade");
             return;
         }
-        if (
-            this.beeMovementSpeedLevel ==
-            beeMovementSpeedThresholds.length - 1
-        ) {
+        if (this.beeMovementSpeedLevel == movementSpeedThresholds.length - 1) {
             console.log("Bee movement speed reached max level");
             return;
         }
@@ -247,6 +252,38 @@ export class GameManager {
         await this.swarm.addNewBee(true);
         this.beeAmount = this.swarm.getBeeCount();
     }
+
+    // DEFENDER UPGRADES =================================================
+
+    upgradeDefenderMovementSpeed() {
+        const upgradeCost =
+            this.getUpgradeCostBasedOnLevel("defender.movement");
+        if (upgradeCost == -1 || this.pollenInfo.pollenAmount < upgradeCost) {
+            console.error("Not enough pollen to upgrade");
+            return;
+        }
+        if (this.beeMovementSpeedLevel == movementSpeedThresholds.length - 1) {
+            console.log("defender movement speed reached max level");
+            return;
+        }
+
+        this.removePollen(upgradeCost);
+        this.defenderMovementSpeedLevel += 1;
+    }
+
+    async upgradeDefenderAmount() {
+        const upgradeCost = this.getUpgradeCostBasedOnLevel("defender.amount");
+        if (upgradeCost == -1 || this.pollenInfo.pollenAmount < upgradeCost) {
+            console.error("Not enough pollen to upgrade");
+            return;
+        }
+
+        this.removePollen(upgradeCost);
+        await this.defenderManager.addNewDefender(true);
+        this.defenderAmount = this.defenderManager.getDefenderCount();
+    }
+
+    // FARM UPGRADES =================================================
 
     generateNewFarmingSpot() {
         const upgradeCost = this.getUpgradeCostBasedOnLevel("farm.newFlower");
@@ -276,6 +313,16 @@ export class GameManager {
                 return Math.floor(
                     upgradeCosts.bee.amount * (this.beeAmount * 0.2)
                 );
+            case "defender.movement":
+                if (
+                    upgradeCosts.defender.movement.length <
+                    this.defenderMovementSpeedLevel
+                )
+                    return -1;
+
+                return upgradeCosts.defender.movement[
+                    this.defenderMovementSpeedLevel - 1
+                ];
             case "farm.newFlower":
                 return upgradeCosts.farm.newFlower;
         }

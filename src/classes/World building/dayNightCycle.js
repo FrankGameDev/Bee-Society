@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Timer } from "three/addons/misc/Timer.js";
 
-const dayAndNightDuration = 65; //day and night duration
+const dayAndNightDuration = 10; //day and night duration
 const orbitDuration = dayAndNightDuration * 2;
 const speed = () => (2 * Math.PI) / orbitDuration; // Angular velocity
 const radius = 10000;
@@ -86,7 +86,7 @@ export class DayNightCycle {
         this.scene.add(this.ambientLight);
     }
 
-    updateCycle() {
+    async updateCycle() {
         if (!this.cycleState) this.#setDay();
         this.timer.update();
         let time = this.timer.getElapsed();
@@ -112,7 +112,7 @@ export class DayNightCycle {
         if (sunPositionY > 0) {
             this.#setDay();
         } else {
-            this.#setNight();
+            await this.#setNight();
         }
     }
     // Interpolate colors
@@ -127,9 +127,9 @@ export class DayNightCycle {
         this.onDayCallback();
     }
 
-    #setNight() {
+    async #setNight() {
         if (this.cycleState === cycleState.night) return;
         this.cycleState = cycleState.night;
-        this.onNightCallback();
+        await this.onNightCallback();
     }
 }

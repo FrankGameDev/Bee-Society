@@ -47,7 +47,7 @@ export class EnemyManager {
         }
     }
 
-    async setDefendersReference(defenderBeesReference) {
+    setDefendersReference(defenderBeesReference) {
         this.defenderBeesReference = defenderBeesReference;
         this.enemiesReference.forEach(
             (enemy) => (enemy.defendingBees = defenderBeesReference)

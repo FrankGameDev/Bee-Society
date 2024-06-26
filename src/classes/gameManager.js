@@ -105,7 +105,8 @@ export class GameManager {
             this.physicsWorld,
             {
                 dimension: this.farm.getGroundDimension(),
-            }
+            },
+            this
         );
         console.log("Enemies loaded");
 
@@ -166,7 +167,6 @@ export class GameManager {
             ).length === this.farm.farmingSpots.length;
 
         if (loseCondition) {
-            console.log("Game lost");
             this.#despawnEnemies();
             this.#despawnDefenders();
             this.#disableBeeSwarm();
@@ -269,7 +269,6 @@ export class GameManager {
             return;
         }
         if (this.beeMovementSpeedLevel == movementSpeedThresholds.length) {
-            console.log("Bee movement speed reached max level");
             return;
         }
 
@@ -299,7 +298,6 @@ export class GameManager {
             return;
         }
         if (this.defenderMovementSpeedLevel == movementSpeedThresholds.length) {
-            console.log("defender movement speed reached max level");
             return;
         }
 
@@ -358,7 +356,7 @@ export class GameManager {
                 ];
             case "bee.amount":
                 return Math.floor(
-                    upgradeCosts.bee.amount * (this.beeAmount * 0.2)
+                    upgradeCosts.bee.amount * (this.beeAmount * 0.1)
                 );
             case "defender.movement":
                 if (

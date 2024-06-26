@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Timer } from "three/addons/misc/Timer.js";
 
-const dayAndNightDuration = 65; //day and night duration
+const dayAndNightDuration = 60; //day and night duration
 const orbitDuration = dayAndNightDuration * 2;
 const speed = () => (2 * Math.PI) / orbitDuration; // Angular velocity
 const radius = 5000;
@@ -154,7 +154,6 @@ export class DayNightCycle {
             if (progress < 1) {
                 requestAnimationFrame(animateDay);
             } else {
-                console.log("moon removed");
                 this.scene.remove(this.moonLight);
             }
         };
@@ -182,7 +181,6 @@ export class DayNightCycle {
             if (progress < 1) {
                 requestAnimationFrame(animateNight);
             } else {
-                console.log("sun removed");
                 this.scene.remove(this.sunLight);
             }
         };

@@ -1,5 +1,4 @@
 import * as THREE from "three";
-
 import { Enemy } from "./enemy";
 
 export class EnemyManager {
@@ -7,13 +6,23 @@ export class EnemyManager {
      *
      * @param {number} enemyAmount
      * @param {{dimension: THREE.Vector2}} levelInfo
+     * @param {GameManager} gameManager
      */
-    constructor(enemyAmount, scene, physicsWorld, levelInfo) {
-        this.enemyAmount = enemyAmount;
+    constructor(enemyAmount, scene, physicsWorld, levelInfo, gameManager) {
+        this.startEnemyAmount = enemyAmount;
+        this.currentEnemyAmount = this.startEnemyAmount;
         this.scene = scene;
         this.physicsWorld = physicsWorld;
         this.levelInfo = levelInfo;
+        this.gameManager = gameManager;
 
+        this.gameManager.dayNightCycle.cycleCount.registerListener(
+            function (k) {
+                this.currentEnemyAmount += Math.floor(k * 0.5);
+
+                console.log("enemy amount: " + this.currentEnemyAmount);
+            }.bind(this)
+        );
         this.enemiesReference = [];
     }
 
@@ -26,7 +35,7 @@ export class EnemyManager {
     async instantiateEnemies(farmingSpots, defenderBeesReference, cycleCount) {
         this.farmingSpots = farmingSpots;
         this.defenderBeesReference = defenderBeesReference;
-        for (let i = 0; i < this.enemyAmount; i++) {
+        for (let i = 0; i < this.currentEnemyAmount; i++) {
             let enemy = new Enemy(
                 {
                     position: this.#getRandomSpawnPosition(),
@@ -70,7 +79,7 @@ export class EnemyManager {
         );
     }
 
-    async #removeDefender(defenderToRemove) {
+    #removeDefender(defenderToRemove) {
         if (!this.defenderBeesReference) {
             console.log("Defenders reference is empty");
             return;
@@ -79,7 +88,7 @@ export class EnemyManager {
         this.defenderBeesReference = this.defenderBeesReference.filter(
             (defender) => defender !== defenderToRemove
         );
-        await this.setDefendersReference(this.defenderBeesReference);
+        this.setDefendersReference(this.defenderBeesReference);
     }
 
     #getRandomSpawnPosition() {

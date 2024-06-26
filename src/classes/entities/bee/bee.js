@@ -190,21 +190,18 @@ export default class Bee {
                 this.nextHarvestingSpot.spotMesh.position
             ) > 200
         ) {
-            console.log("Reaching the target...");
             return;
         }
 
         // if target reached
         this.harvestHandler = setInterval(
             function () {
-                console.log("harvesting...");
                 const harvestedPollen = this.nextHarvestingSpot.harvestPollen();
                 this.gameManager.addPollen(harvestedPollen);
                 if (this.nextHarvestingSpot.currentPollenLevel <= 0) {
                     this.readyToHarvest = false;
                     this.nextHarvestingSpot = null;
                     this.resetHarvesting();
-                    console.log("Ending harvesting...");
                 }
             }.bind(this),
             1000
@@ -214,7 +211,6 @@ export default class Bee {
     resetHarvesting() {
         clearInterval(this.harvestHandler);
         this.harvestHandler = null;
-        console.log("Reset harvesting...");
     }
 
     // BOID LOGIC =================================================================

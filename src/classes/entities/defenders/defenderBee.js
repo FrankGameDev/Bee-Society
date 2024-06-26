@@ -188,7 +188,6 @@ export default class DefenderBee {
 
     #attackEnemy() {
         if (!this.nearestEnemy) {
-            console.log("No enemy near");
             return;
         }
         if (this.isAttacking) return;

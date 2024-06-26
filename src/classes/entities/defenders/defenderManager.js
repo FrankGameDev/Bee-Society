@@ -91,7 +91,6 @@ export class DefenderManager {
 
     #removeEnemyReference(enemyToRemove) {
         if (!this.enemies) {
-            console.log("Enemies reference is empty");
             return;
         }
 

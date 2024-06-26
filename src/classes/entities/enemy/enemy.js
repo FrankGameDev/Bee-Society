@@ -282,7 +282,6 @@ export class Enemy {
             this.enemyMesh.position.distanceTo(nextDefender.beeMesh.position) >
             100
         ) {
-            console.log("Reaching the target...");
             return;
         }
 
@@ -291,12 +290,10 @@ export class Enemy {
         this.attackingRoutine = setInterval(
             function () {
                 this.nextDefender.takeDamage(damage * this.damageMultiplier);
-                console.log("Enemy attacking...");
                 if (this.nextDefender.health <= 0) {
                     this.onDefenderKill(this.nextDefender);
                     this.nextDefender = null;
                     this.isAttacking = false;
-                    console.log("Ending attacking...");
                     clearInterval(this.attackingRoutine);
                     this.attackingRoutine = null;
                 }
@@ -310,7 +307,6 @@ export class Enemy {
         if (
             this.enemyMesh.position.distanceTo(nextFarm.spotMesh.position) > 100
         ) {
-            console.log("Reaching the target...");
             return;
         }
         this.isStealing = true;
@@ -318,12 +314,10 @@ export class Enemy {
         this.harvestingRoutine = setInterval(
             function () {
                 this.nextFarm.harvestPollen();
-                console.log("Enemy stealing pollen...");
                 if (this.nextFarm.currentPollenLevel <= 0) {
                     this.nextFarm.wasAttacked = true;
                     this.nextFarm = null;
                     this.isStealing = false;
-                    console.log("Ending stealing pollen...");
                     clearInterval(this.harvestingRoutine);
                     this.harvestingRoutine = null;
                 }

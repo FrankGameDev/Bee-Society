@@ -1,8 +1,19 @@
 # Bee Society
 
-This project is done for the exam of the Interactive Graphic course, maintained by professor _Paolo Russo_.
+This project is done for the exam of the Interactive Graphic course, maintained by Professor _Paolo Russo_.
 
 ## Game description
+
+_Genre_: Tower defense
+
+The main goal of the game is to hold out for as long as possible and reach the highest round.
+There are two main phases:
+
+-   **Day cycle**:
+    direct the bees towards the flowers to collect honey and upgrade your hive
+
+-   **Night cycle**:
+    Enemy wasps will come out to destroy flowers. But don't worry, your defender bees will come out of the hive to embrace the flower's pollen and eradicate the wasps
 
 ## Quick start
 

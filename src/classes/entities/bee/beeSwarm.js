@@ -72,17 +72,6 @@ export default class BeeSwarm {
             this.addNewBee();
         }
         this.bees.forEach(async (bee) => await bee.instantiate());
-
-        // this.boidSimulation = new BoidSimulation(
-        //     this.bees,
-        //     500,
-        //     0.1,
-        //     0.3,
-        //     5,
-        //     50,
-        //     50,
-        //     50
-        // );
     }
 
     update(target = new THREE.Vector3()) {

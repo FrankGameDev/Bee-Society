@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Timer } from "three/addons/misc/Timer.js";
 
-const dayAndNightDuration = 10; //day and night duration
+const dayAndNightDuration = 60; //day and night duration
 const orbitDuration = dayAndNightDuration * 2;
 const speed = () => (2 * Math.PI) / orbitDuration; // Angular velocity
 const radius = 5000;
@@ -70,10 +70,21 @@ export class DayNightCycle {
         this.sunLight.castShadow = true;
         this.scene.add(this.sunLight);
 
-        this.helper = new THREE.CameraHelper(this.sunLight.shadow.camera);
-        this.scene.add(this.helper);
+        this.moonLight = new THREE.DirectionalLight(0xb1b5b2, 3);
+        this.moonLight.position.set(45, 45, 45);
+        this.moonLight.shadow.mapSize.width = 2048;
+        this.moonLight.shadow.mapSize.height = 2048;
+        this.moonLight.shadow.camera.near = -0.00001;
+        this.moonLight.shadow.camera.far = 30000;
+        this.moonLight.shadow.camera.left = -5000;
+        this.moonLight.shadow.camera.right = 5000;
+        this.moonLight.shadow.camera.top = 5000;
+        this.moonLight.shadow.camera.bottom = -5000;
+        this.moonLight.shadow.bias = -0.001;
+        this.moonLight.castShadow = true;
+        this.scene.add(this.moonLight);
 
-        const hemiLight = new THREE.HemisphereLight(0xa3a29b, 0xa3a29b, 0.5);
+        const hemiLight = new THREE.HemisphereLight(0xdbb18c, 0xa3a29b, 0.5);
         hemiLight.position.set(0, 1000, 0);
         this.scene.add(hemiLight);
 
@@ -84,7 +95,6 @@ export class DayNightCycle {
         if (!this.isEnabled) return;
 
         if (!this.cycleState) this.#setDay();
-        this.helper.update();
 
         this.timer.update();
         let time = this.timer.getElapsed();
@@ -121,15 +131,63 @@ export class DayNightCycle {
         this.cycleState = cycleState.day;
         this.cycleCount.value += 1;
         this.onDayCallback();
+
+        this.scene.add(this.sunLight);
+        this.sunLight.position.set(45, 45, 45);
+
+        let startTime = null;
+        const duration = 500;
+
+        const animateDay = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            this.sunLight.intensity = this.#lerp(0, 1, progress);
+            this.moonLight.intensity = this.#lerp(1, 0, progress);
+
+            if (progress < 1) {
+                requestAnimationFrame(animateDay);
+            } else {
+                console.log("moon removed");
+                this.scene.remove(this.moonLight);
+            }
+        };
     }
 
     async #setNight() {
         if (this.cycleState === cycleState.night) return;
         this.cycleState = cycleState.night;
         await this.onNightCallback();
+
+        this.scene.add(this.moonLight);
+        this.moonLight.position.set(45, 45, 45);
+
+        let startTime = null;
+        const duration = 500;
+
+        const animateNight = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            this.sunLight.intensity = this.#lerp(1, 0, progress);
+            this.moonLight.intensity = this.#lerp(0, 1, progress);
+
+            if (progress < 1) {
+                requestAnimationFrame(animateNight);
+            } else {
+                console.log("sun removed");
+                this.scene.remove(this.sunLight);
+            }
+        };
     }
 
     disable() {
         this.isEnabled = false;
+    }
+
+    #lerp(a, b, alpha) {
+        return a + alpha * (b - a);
     }
 }

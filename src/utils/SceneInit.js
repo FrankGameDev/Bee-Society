@@ -39,12 +39,26 @@ export class SceneInit {
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.shadowMap.enabled = true;
+        this.renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(this.renderer.domElement);
 
         this.controls = new OrbitControls(
             this.camera,
             this.renderer.domElement
         );
+        this.controls.maxDistance = 7000;
+        this.controls.minDistance = 500;
+        this.controls.minPolarAngle = 0;
+        this.controls.maxPolarAngle = Math.PI / 2;
+        const originalUpdate = this.controls.update;
+        this.controls.update = function () {
+            originalUpdate.call(this);
+
+            if (this.camera.position.y < 10) {
+                this.camera.position.y = 10;
+            }
+        }.bind(this);
+
         this.stats = Stats();
         this.stats.dom.classList.toggle("stats", true);
         document.body.appendChild(this.stats.dom);

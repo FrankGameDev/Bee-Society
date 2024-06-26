@@ -88,7 +88,7 @@ export class Farm {
                 if (child.isMesh) {
                     child.castShadow = true;
                     child.receiveShadow = true;
-                    child.material = new THREE.MeshStandardMaterial({
+                    child.material = new THREE.MeshPhongMaterial({
                         map: child.material.map,
                     });
                 }
@@ -96,7 +96,7 @@ export class Farm {
         }
 
         let hive = new THREE.SphereGeometry(200);
-        let hiveMat = new THREE.MeshPhongMaterial({
+        let hiveMat = new THREE.MeshBasicMaterial({
             transparent: true,
             opacity: 0,
         });
@@ -111,8 +111,6 @@ export class Farm {
         this.physicsWorld.addBody(this.hiveBody);
 
         this.hiveMesh.position.set(0, 300, 0);
-        // this.hiveMesh.castShadow = true;
-        // this.hiveMesh.receiveShadow = true;
         this.hiveBody.position.copy(this.hiveMesh.position);
     }
 

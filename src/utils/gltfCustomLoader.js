@@ -12,7 +12,6 @@ export class GLTFCustomLoader {
      * @returns promise with the loaded model in the result
      */
     loadGLTFModel(path) {
-        //TODO rework logic from this code and all its implementations
         return new Promise((resolve, reject) => {
             this.gltfLoader.load(
                 path,

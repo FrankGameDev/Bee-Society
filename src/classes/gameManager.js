@@ -90,7 +90,7 @@ export class GameManager {
         this.setShadowState();
 
         this.defenderManager = new DefenderManager(
-            10,
+            5,
             new THREE.Vector3(0, 100, 0),
             this.scene,
             this.physicsWorld,

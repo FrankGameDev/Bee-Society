@@ -31,11 +31,9 @@ export class SceneInit {
         this.camera.position.z = 1000;
         this.camera.position.y = 300;
 
-        const canvas = document.getElementById("webGlRenderer");
+        this.canvas = document.getElementById("webGlRenderer");
         this.renderer = new THREE.WebGLRenderer({
-            canvas: canvas,
-            stencil: true,
-            antialias: true,
+            canvas: this.canvas,
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.shadowMap.enabled = true;

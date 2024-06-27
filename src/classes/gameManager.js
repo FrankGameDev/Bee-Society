@@ -173,6 +173,7 @@ export class GameManager {
             this.#disableGameUI();
             this.dayNightCycle.disable();
             this.uiManager.showLoseUI();
+            this.sceneInitializer.canvas.classList.toggle("hidden", true);
         }
     }
 

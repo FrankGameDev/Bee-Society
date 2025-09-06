@@ -33,3 +33,12 @@ To run this project on your local computer, follow these steps:
     ```node
     npx vite
     ```
+
+### Gameplay 
+
+https://github.com/FrankGameDev/Bee-Society/assets/114099283/5600975b-232c-4ddd-a31a-cde7dd21a707
+
+
+
+
+

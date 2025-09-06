@@ -111,7 +111,7 @@ export class GameManager {
         console.log("Enemies loaded");
 
         this.swarm = new BeeSwarm(
-            20,
+            200,
             {
                 radius: 20,
                 mass: 1,

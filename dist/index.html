@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Bee Society</title>
+        <style>
+            body {
+                margin: 0;
+            }
+        </style>
+      <script type="module" crossorigin src="/assets/index-CuBAmtNU.js"></script>
+      <link rel="stylesheet" crossorigin href="/assets/index-D62zbQKk.css">
+    </head>
+    <body>
+        <div id="canvas-div">
+            <canvas id="webGlRenderer"></canvas>
+        </div>
+
+        <!-- UI -->
+        <div
+            class="ui position-relative d-flex flex-column justify-content-between">
+            <div
+                id="top-ui"
+                class="top-ui position-relative w-100 h-auto d-flex justify-content-start align-items-start">
+                <div
+                    id="cycle"
+                    class="cycle position-absolute top-0 start-0 mt-3 mx-lg-4 w-25">
+                    <div id="cycle-timer" class="progress">
+                        <div
+                            id="cycle-timer-bar"
+                            class="progress-bar bg-warning progress-bar-animated progress-bar-striped"
+                            role="progressbar">
+                            <p id="cycle-time" class="my-auto mx-auto"></p>
+                        </div>
+                    </div>
+                    <div
+                        id="cycle-count"
+                        class="fw-bold fst-italic fs-2 text-uppercase text-light">
+                        <p id="cycle-count-label">Cycle: 1</p>
+                    </div>
+                </div>
+
+                <div
+                    id="pollen"
+                    class="pollen d-flex position-absolute top-0 start-50 translate-middle-x border border-light border-opacity-75">
+                    <img
+                        src="/assets/bee%20hive-BsnqkAMW.png"
+                        alt="pollen placeholder"
+                        class="mx-3 my-auto w-50 h-50" />
+                    <p
+                        id="pollen-currency"
+                        class="pollen-currency mx-4 my-auto">
+                        100
+                    </p>
+                </div>
+            </div>
+
+            <div
+                id="bottom-ui"
+                class="bottom-ui position-relative w-100 h-auto d-flex justify-content-end align-items-end">
+                <div
+                    id="upgrade-container"
+                    class="upgrade-container d-flex flex-row mb-2 me-3">
+                    <div
+                        id="bee-upgrade-container"
+                        class="d-flex flex-row position-relative">
+                        <button
+                            id="bee-upgrade-menu-button"
+                            class="btn btn-lg btn-success">
+                            Bee Upgrades
+                        </button>
+                        <div
+                            id="bee-upgrade-menu"
+                            class="position-relative upgrade-menu hidden">
+                            <div
+                                class="upgrade-button"
+                                id="bee-movement-upgrade-container">
+                                <button
+                                    id="bee-movement-upgrade"
+                                    class="btn btn-lg btn-secondary">
+                                    Movement
+                                </button>
+                                <div class="d-flex flex-column">
+                                    <span id="bee-movement-level">
+                                        Current level = 1
+                                    </span>
+                                    <span id="bee-movement-cost">
+                                        Cost: 10
+                                    </span>
+                                </div>
+                            </div>
+                            <div
+                                class="upgrade-button"
+                                id="bee-amount-upgrade-container">
+                                <button
+                                    id="bee-amount-upgrade"
+                                    class="btn btn-lg btn-secondary">
+                                    Amount
+                                </button>
+                                <div class="d-flex flex-column">
+                                    <span id="bee-amount-level">
+                                        Current level = 1
+                                    </span>
+                                    <span id="bee-amount-cost"> Cost: 10 </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        id="defender-upgrade-container"
+                        class="d-flex flex-row position-relative mx-4">
+                        <button
+                            id="defender-upgrade-menu-button"
+                            class="btn btn-lg btn-danger">
+                            Defender upgrades
+                        </button>
+                        <div
+                            id="defender-upgrade-menu"
+                            class="position-relative upgrade-menu hidden">
+                            <div
+                                class="upgrade-button"
+                                id="defender-movement-upgrade-container">
+                                <button
+                                    id="defender-movement-upgrade"
+                                    class="btn btn-lg btn-secondary">
+                                    Movement
+                                </button>
+                                <div class="d-flex flex-column">
+                                    <span id="defender-movement-level">
+                                        Current level = 1
+                                    </span>
+                                    <span id="defender-movement-cost">
+                                        Cost: 10
+                                    </span>
+                                </div>
+                            </div>
+                            <div
+                                class="upgrade-button"
+                                id="defender-amount-upgrade-container">
+                                <button
+                                    id="defender-amount-upgrade"
+                                    class="btn btn-lg btn-secondary">
+                                    Amount
+                                </button>
+                                <div class="d-flex flex-column">
+                                    <span id="defender-amount-level">
+                                        Current level = 1
+                                    </span>
+                                    <span id="defender-amount-cost">
+                                        Cost: 10
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        id="farm-upgrade-container"
+                        class="d-flex flex-row position-relative">
+                        <button
+                            id="farm-upgrade-menu-button"
+                            class="btn btn-lg btn-dark">
+                            Farm Upgrades
+                        </button>
+                        <div
+                            id="farm-upgrade-menu"
+                            class="position-relative upgrade-menu hidden">
+                            <div
+                                class="upgrade-button"
+                                id="farm-spot-upgrade-container">
+                                <button
+                                    id="farm-spot-upgrade"
+                                    class="btn btn-lg btn-secondary">
+                                    New flower
+                                </button>
+                                <div class="d-flex flex-column">
+                                    <span id="farm-spot-cost"> Cost: 1 </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lose UI -->
+        <div id="lose-ui" class="lose-interface hidden">
+            <div class="lose-title">
+                <h1 id="lose-title">You survived X cycles</h1>
+                <button class="btn btn-info hidden mt-3" id="play-again-btn">
+                    Play again
+                </button>
+            </div>
+        </div>
+
+        <!-- Scripts -->
+    </body>
+</html>

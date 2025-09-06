@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFCustomLoader } from "../../utils/gltfCustomLoader";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
 
-const flowerGLTF = "/flowers/scene.gltf";
+const flowerGLTF = "/gltf/flowers/scene.gltf";
 const maxPollen = 10;
 
 export class Flower {

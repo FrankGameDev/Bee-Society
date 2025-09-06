@@ -2,7 +2,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export class GLTFCustomLoader {
     constructor() {
-        this.gltfLoader = new GLTFLoader().setPath("resources/gltf");
+        this.gltfLoader = new GLTFLoader();
         this.models = {};
     }
 
@@ -13,11 +13,20 @@ export class GLTFCustomLoader {
      */
     loadGLTFModel(path) {
         return new Promise((resolve, reject) => {
+            console.log(`Attempting to load GLTF from: ${path}`);
             this.gltfLoader.load(
                 path,
-                (gltf) => resolve(gltf),
-                undefined,
-                (error) => reject(error)
+                (gltf) => {
+                    console.log(`Successfully loaded: ${path}`);
+                    resolve(gltf);
+                },
+                (progress) => {
+                    console.log(`Loading progress for ${path}:`, progress);
+                },
+                (error) => {
+                    console.error(`Failed to load GLTF from ${path}:`, error);
+                    reject(error);
+                }
             );
         });
     }
@@ -36,9 +45,10 @@ export class GLTFCustomLoader {
                 this.models[modelName] = gltf;
             } catch (error) {
                 console.error(
-                    `Errore nel caricamento del modello ${path}:`,
+                    `Error loading model ${modelName} from ${path}:`,
                     error
                 );
+                // Continue loading other models even if one fails
             }
         }
         return this.models;

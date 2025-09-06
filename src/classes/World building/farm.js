@@ -5,7 +5,7 @@ import { GLTFCustomLoader } from "../../utils/gltfCustomLoader";
 
 const planeDimension = { x: 10000, y: 10000 };
 
-const hiveModelPath = "/honeycomb_material/scene.gltf";
+const hiveModelPath = "/gltf/honeycomb_material/scene.gltf";
 
 export class Farm {
     constructor(scene, physicsWorld) {
@@ -23,17 +23,17 @@ export class Farm {
         //Texture loader
         this.textureLoader = new THREE.TextureLoader();
         this.grassTexture = this.textureLoader.load(
-            "resources/textures/grass/Grass001_1K-JPG_Color.jpg"
+            "/textures/grass/Grass001_1K-JPG_Color.jpg"
         );
         this.grassTexture.wrapS = THREE.RepeatWrapping;
         this.grassTexture.wrapT = THREE.RepeatWrapping;
         this.grassTexture.repeat.set(5, 5);
 
         this.grassNormalMap = this.textureLoader.load(
-            "resources/textures/grass/Grass001_1K-JPG_NormalGL.jpg"
+            "/textures/grass/Grass001_1K-JPG_NormalGL.jpg"
         );
         this.grassDisplacement = this.textureLoader.load(
-            "resources/textures/grass/Grass001_1K-JPG_Displacement.jpg"
+            "/textures/grass/Grass001_1K-JPG_Displacement.jpg"
         );
 
         this.modelLoader = new GLTFCustomLoader();

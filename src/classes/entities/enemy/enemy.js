@@ -6,7 +6,7 @@ const minSpeed = 250;
 const maxSpeed = 300;
 const damage = 1;
 
-const enemyModelPath = "/bee_low_poly/scene.gltf";
+const enemyModelPath = "/gltf/bee_low_poly/scene.gltf";
 
 export class Enemy {
     /**

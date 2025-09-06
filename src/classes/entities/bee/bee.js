@@ -9,7 +9,7 @@ const separationRange = 50;
 const cohesionRange = 50;
 const alignmentRange = 50;
 
-const beeModelPath = "/ps1_bee/scene.gltf";
+const beeModelPath = "/gltf/ps1_bee/scene.gltf";
 
 export default class Bee {
     /**
